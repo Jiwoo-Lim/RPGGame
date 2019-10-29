@@ -106,7 +106,7 @@ namespace RPGGameServer
             int tResult = -1;
 
             MySqlConnection tConnection;
-            string tConfigString = "Server=localhost;port=8889;Database=rpggamedb;Uid=root;Pwd=root;";
+            string tConfigString = "Server=192.168.0.11;port=8889;Database=rpggamedb;Uid=poong;Pwd=0950;";
 
             tConnection = new MySqlConnection(tConfigString);
 
@@ -146,7 +146,7 @@ namespace RPGGameServer
         static void CreateUser(string tId, string tPassword)
         {
             MySqlConnection tConnection;
-            string tConfigString = "Server=localhost;port=8889;Database=rpggamedb;Uid=root;Pwd=root;";
+            string tConfigString = "Server=192.168.0.11;port=8889;Database=rpggamedb;Uid=poong;Pwd=0950;";
 
             tConnection = new MySqlConnection(tConfigString);
 
