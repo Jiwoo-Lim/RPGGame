@@ -11,7 +11,7 @@ namespace RPGGameServer
         public List<Class_User> mUsers = new List<Class_User>();
 
         public int mId = 0;
-        public int mMasterId = 0;
+        public string mMasterId = "";
 
         public string mName = "";
 

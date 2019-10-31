@@ -4,6 +4,7 @@ using System.Net.Sockets;
 using System.Threading;
 using System.Collections.Generic;
 using System.Text;
+using System.Data;
 using MySql.Data.Common;
 using MySql.Data.MySqlClient;
 
@@ -56,7 +57,7 @@ namespace RPGGameServer
                                         string tPassword = Encoding.UTF8.GetString(tBuffer, tBuffer[1] + 3, tBuffer[tBuffer[1] + 2]);
                                         Console.WriteLine(tId + "\n" + tPassword);
 
-                                        int tUserId = IsMember(tId, tPassword);
+                                        int tUserId = IsMember(tId, tPassword, tUser);
                                         if (tUserId > -1)
                                         {
                                             Class_User tTemp = new Class_User();
@@ -70,14 +71,14 @@ namespace RPGGameServer
                                         }
                                         else
                                         {
-                                            Console.WriteLine("Search Fail User");
+                                            Console.WriteLine("No Exist User");
 
-                                            CreateUser(tId, tPassword);
+                                            tUserId = CreateUser(tId, tPassword,tUser);
 
                                             tUser.mId = tUserId;
 
                                             byte[] tBufferSend = new byte[4];
-                                            tBufferSend[0] = (byte)PROTOCOL.ACK_LOGIN;
+                                            tBufferSend[0] = (byte)PROTOCOL.ACK_CREATE_CHAR;
                                             tBufferSend[1] = (byte)tUser.mId;
 
                                             tUser.Send(tBufferSend, tBufferSend.Length);
@@ -86,7 +87,45 @@ namespace RPGGameServer
                                         }
                                     }
                                     break;
-                                case PROTOCOL.REQ_CREATE_ID:
+                                case PROTOCOL.REQ_CREATE_ROOM:
+                                    {
+                                        Console.WriteLine("REQ_CREATE_ROOM");
+
+                                        Class_Room tRoom = new Class_Room();
+
+                                        
+
+                                        tRoom.mId = 1;
+                                        tRoom.mName = tUser.mName+"'s Room";
+                                        tRoom.mMasterId = tUser.mName;
+
+                                        tUser.mRoomId = tRoom.mId;
+                                        tUser.mReadyPlay = READY_PLAY.READY;
+                                        tUser.mpRoom = tRoom; 
+                                        
+                                        CreateRoom(tUser);
+                                        tRoom.mUsers.Add(tUser);
+
+                                        mRooms.Add(tRoom);
+
+                                        byte[] tMasterId = Encoding.UTF8.GetBytes(tRoom.mMasterId);
+                                        byte tMasterIdLength = (byte)tRoom.mMasterId.Length;
+
+                                        byte[] tRoomName = Encoding.UTF8.GetBytes(tRoom.mName);
+                                        byte tRoomNameLength = (byte)tRoom.mName.Length;
+
+                                        byte[] tBufferSend = new byte[1024];
+                                        tBufferSend[0] = (byte)PROTOCOL.ACK_CREATE_ROOM;
+                                        tBufferSend[1] = (byte)tRoom.mId;
+
+                                        tBufferSend[2] = tMasterIdLength;
+                                        tMasterId.CopyTo(tBufferSend, 3);
+
+                                        tBufferSend[tBufferSend[2]+3] = tRoomNameLength;
+                                        tRoomName.CopyTo(tBufferSend, tBufferSend[2] + 4);
+
+                                        tUser.Send(tBufferSend, tBufferSend.Length);
+                                    }
                                     break;
                                 case PROTOCOL.REQ_JOIN_ROOM:
                                     break;
@@ -101,7 +140,7 @@ namespace RPGGameServer
             }
         }
 
-        static int IsMember(string tId, string tPassword)
+        static int IsMember(string tId, string tPassword,Class_User tUser)
         {
             int tResult = -1;
 
@@ -120,18 +159,17 @@ namespace RPGGameServer
                     string tQuery = "SELECT * FROM tbluserinfo where id='" + tId + "';";
                     MySqlCommand cmd = new MySqlCommand(tQuery, tConnection);
                     MySqlDataReader tExecuteR = cmd.ExecuteReader();
-                    string tStrDisplay = "";
 
 
                     while (tExecuteR.Read())
                     {
-                        tStrDisplay += tExecuteR["Id"].ToString();
-                        tStrDisplay += tExecuteR["Password"].ToString();
-
                         if (tExecuteR["Password"].ToString() == tPassword)
                         {
                             tResult = (int)tExecuteR["Key"];
                         }
+
+                        tUser.mName = tExecuteR["Id"].ToString();
+                        tUser.mRoomId = (int)tExecuteR["Room_Id"];
                     }
                     tExecuteR.Close();
                 }
@@ -140,11 +178,14 @@ namespace RPGGameServer
             {
                 Console.WriteLine("Connection is not valid.");
             }
+            tConnection.Close();
             return tResult;
         }
 
-        static void CreateUser(string tId, string tPassword)
+        static int CreateUser(string tId, string tPassword, Class_User tUser)
         {
+            int tResult = -1;
+
             MySqlConnection tConnection;
             string tConfigString = "Server=192.168.0.11;port=8889;Database=rpggamedb;Uid=poong;Pwd=0950;";
 
@@ -163,17 +204,21 @@ namespace RPGGameServer
                     int tKey_ = 0;
                     while (tExecuteR.Read())
                     {
-                        tKey_ = (int)tExecuteR["Key"]+1;
+                        tKey_ = (int)tExecuteR["Key"] + 1;
                         Console.WriteLine("tKey_ : " + tKey_);
+                        tResult = tKey_;
                     }
                     tExecuteR.Close();
 
                     string tQuery = "insert into tbluserinfo values(" + tKey_ + ",'" + tId + "','" + tPassword + "','null',0,0,0);";
                     MySqlCommand cmd_ = new MySqlCommand(tQuery, tConnection);
                     MySqlDataReader tExecuteR_ = cmd_.ExecuteReader();
+                    while (tExecuteR_.Read())
+                    {
+                        tUser.mName = tExecuteR["Id"].ToString();
+                        tUser.mRoomId = (int)tExecuteR["Room_Id"];
+                    }
                     tExecuteR_.Close();
-
-
                 }
             }
             catch (Exception ex)
@@ -181,6 +226,41 @@ namespace RPGGameServer
                 Console.WriteLine(ex);
                 Console.WriteLine("Connection is not valid.");
             }
+            tConnection.Close();
+            return tResult;
+        }
+
+        static void CreateRoom(Class_User tUser)
+        {
+            MySqlConnection tConnection = new MySqlConnection();
+            tConnection.ConnectionString = "Server=192.168.0.11;port=8889;Database=rpggamedb;Uid=poong;Pwd=0950;";
+            MySqlCommand cmd = new MySqlCommand();
+
+            try
+            {
+                tConnection.Open();
+                Console.WriteLine("tConnection is opened.");
+                cmd.Connection = tConnection;
+
+                cmd.CommandText = "CreateRoom";
+                cmd.CommandType = CommandType.StoredProcedure;
+
+                cmd.Parameters.AddWithValue("tRoomId", tUser.mRoomId);
+                cmd.Parameters["tRoomId"].Direction = ParameterDirection.Input;
+
+                cmd.Parameters.AddWithValue("tUserId", tUser.mName);
+                cmd.Parameters["tUserId"].Direction = ParameterDirection.Input;
+
+                cmd.Parameters.AddWithValue("tRoomName", tUser.mName + "'s Room");
+                cmd.Parameters["tRoomName"].Direction = ParameterDirection.Input;
+                
+                cmd.ExecuteNonQuery();
+            }
+            catch(Exception ex)
+            {
+                Console.WriteLine(ex);
+            }
+            tConnection.Close();
         }
     }
 }

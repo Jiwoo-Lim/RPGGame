@@ -22,6 +22,8 @@ namespace RPGGameServer
         public PacketQueue mRecvQueue = null;
 
         public int mId = 0;
+        public int mRoomId = 0;
+        public string mName = "";
 
         public READY_PLAY mReadyPlay = READY_PLAY.NOT_READY;
 

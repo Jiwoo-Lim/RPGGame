@@ -27,7 +27,11 @@ namespace RPGGameServer
                 //소켓생성
                 mSocketForListen = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
                 //사용할 포트 번호를 할당.
-                mSocketForListen.Bind(new IPEndPoint(IPAddress.Loopback, port));
+                //mSocketForListen.Bind(new IPEndPoint(IPAddress.Loopback, port));
+
+                IPAddress ipaddr = IPAddress.Parse("192.168.0.11");
+
+                mSocketForListen.Bind(new IPEndPoint(ipaddr, port));
                 //대기를 시작.
                 mSocketForListen.Listen(tConnectionNum);
             }
