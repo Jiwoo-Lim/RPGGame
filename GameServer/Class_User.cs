@@ -25,6 +25,8 @@ namespace RPGGameServer
         public int mRoomId = 0;
         public string mName = "";
 
+        public bool mUserConnect = false;
+
         public READY_PLAY mReadyPlay = READY_PLAY.NOT_READY;
 
         public Class_Room mpRoom = null;

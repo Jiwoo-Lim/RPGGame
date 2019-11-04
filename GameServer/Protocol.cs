@@ -5,6 +5,8 @@
     ACK_CONNECT = 10,
     REQ_LOGIN,
     ACK_LOGIN,
+    //아이디는 맞는데 비밀번호가 틀렸을경우.
+    ACK_LOGIN_FAIL,
     //TitleScene End
 
     //CreateCharactorScene Start
@@ -14,14 +16,14 @@
     REQ_CREATE_CHAR,
     //CreateCharactorScene End
 
-    //RoomSelectScene Start
-    //생성된 방이 없을 경우
+    //RoomSelectScene Start    
     REQ_CREATE_ROOM,
     ACK_CREATE_ROOM,
     
-    //생성된 방이 있을 경우 입장
     REQ_JOIN_ROOM,
     ACK_JOIN_ROOM,
+    //방이 없을경우
+    ACK_JOIN_ROOM_FAIL,
     //RoomSelectScene End
 
     //RoomScene Start
