@@ -24,6 +24,9 @@ namespace RPGGameServer
         public int mId = 0;
         public int mRoomId = 0;
         public string mName = "";
+        public string mOccupation = "";
+        public int mHP = 0;
+        public int mAP = 0;
 
         public bool mUserConnect = false;
 

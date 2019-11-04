@@ -98,6 +98,26 @@ namespace RPGGameServer
                                         }
                                     }
                                     break;
+                                case PROTOCOL.REQ_CREATE_CHAR:
+                                    {
+                                        int tHP = (int)tBuffer[1];
+                                        int tAP = (int)tBuffer[2];
+                                        int tOccupationlength = (int)tBuffer[3];
+                                        int tOffset = 4;
+                                        string tOccupation = Encoding.UTF8.GetString(tBuffer, tOffset, tOccupationlength);
+
+                                        tUser.mHP = tHP;
+                                        tUser.mAP = tAP;
+                                        tUser.mOccupation = tOccupation;
+
+                                        UpdateuserInfo(tUser);
+
+                                        //응답
+                                        byte[] tBufferSend = new byte[1024];
+                                        tBufferSend[0] = (byte)PROTOCOL.ACK_LOGIN;
+                                        tUser.Send(tBufferSend, tBufferSend.Length);
+                                    }
+                                    break;
                                 case PROTOCOL.REQ_CREATE_ROOM:
                                     {
                                         Console.WriteLine("REQ_CREATE_ROOM");
@@ -384,6 +404,35 @@ namespace RPGGameServer
             }
             tConnection.Close();
             return tResult;
+        }
+
+        static void UpdateuserInfo(Class_User tUser)
+        {
+            MySqlConnection tConnection;
+            string tConfigString = "Server=192.168.0.11;port=8889;Database=rpggamedb;Uid=poong;Pwd=0950;";
+
+            tConnection = new MySqlConnection(tConfigString);
+
+            try
+            {
+                tConnection.Open();
+                Console.WriteLine("tConnection is opened.");
+
+                if (null != tConnection)
+                {
+                    string tKey = "update tbluserinfo set Occupation='" + tUser.mOccupation + "', HP=" + tUser.mHP + ", AttackAP=" + tUser.mAP + " where Id=" + tUser.mName + ";";
+                    MySqlCommand cmd = new MySqlCommand(tKey, tConnection);
+                    MySqlDataReader tExecuteR = cmd.ExecuteReader();
+                    tExecuteR.Close();
+
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+                Console.WriteLine("Connection is not valid.");
+            }
+            tConnection.Close();
         }
 
         static void CreateRoom(Class_User tUser)
