@@ -9,8 +9,8 @@ public class Class_NetworkClient
     private static Class_NetworkClient mInstance = null;
 
     //EndPoint
-    private string mServerIPAddress = "";
-    private int mPort = 0;
+    public string mServerIPAddress = "";
+    public int mPort = 0;
 
     //socket, is connect
     private Socket mSocketForClient = null;
@@ -26,10 +26,12 @@ public class Class_NetworkClient
     private PacketQueue mSendQueue = null;
     private PacketQueue mRecvQueue = null;
 
-    public Class_UserInfo mMyUserInfo = null;
-    public List<Class_UserInfo> mUserInfoes = new List<Class_UserInfo>();
+    public Class_Singleton_User mMyUserInfo = null;
+    public List<Class_Singleton_User> mUserInfoes = new List<Class_Singleton_User>();
 
     public int mRoomId = 0;
+    public string mRoomMaster = "";
+    public string mRoomName = "";
 
     private Class_NetworkClient()
     {
@@ -48,7 +50,7 @@ public class Class_NetworkClient
 
     public void CreateRyu()
     {
-        mServerIPAddress = "127.0.0.1";
+        mServerIPAddress = "192.168.0.11";
         mPort = 50765;
 
         mSendQueue = new PacketQueue();
@@ -65,7 +67,7 @@ public class Class_NetworkClient
             mSocketForClient.Connect(address, port);
 
             Debug.Log("TransportTCP connect called.]]]]]]   " + address + ", " + port);
-
+            
             tResult = LaunchThread();
         }
         catch
@@ -224,11 +226,11 @@ public class Class_NetworkClient
         }
     }
 
-    public void CleanTurn()
-    {
-        foreach (var u in mUserInfoes)
-        {
-            u.mIsMyTurn = false;
-        }
-    }
+    //public void CleanTurn()
+    //{
+    //    foreach (var u in mUserInfoes)
+    //    {
+    //        u.mIsMyTurn = false;
+    //    }
+    //}
 }

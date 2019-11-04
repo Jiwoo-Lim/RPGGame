@@ -7,6 +7,7 @@ using System.Text;
 using System.Data;
 using MySql.Data.Common;
 using MySql.Data.MySqlClient;
+using System.IO;
 
 namespace RPGGameServer
 {
@@ -100,17 +101,28 @@ namespace RPGGameServer
                                     break;
                                 case PROTOCOL.REQ_CREATE_CHAR:
                                     {
-                                        int tHP = (int)tBuffer[1];
-                                        int tAP = (int)tBuffer[2];
-                                        int tOccupationlength = (int)tBuffer[3];
-                                        int tOffset = 4;
+                                        int tHPLength = (int)tBuffer[1];
+                                        int tOffset = 2;
+                                        int tHP = BitConverter.ToInt32(tBuffer, tOffset);
+                                        tOffset += sizeof(int);
+
+                                        int tAPLength = tBuffer[tOffset];
+                                        tOffset += 1;
+                                        int tAP = BitConverter.ToInt32(tBuffer, tOffset);
+                                        tOffset += sizeof(int); 
+
+                                        int tOccupationlength = (int)tBuffer[tOffset];
+                                        tOffset += 1;
                                         string tOccupation = Encoding.UTF8.GetString(tBuffer, tOffset, tOccupationlength);
+
+                                        Console.WriteLine("HP : " + tHP);
+                                        Console.WriteLine("AP : " + tAP);
 
                                         tUser.mHP = tHP;
                                         tUser.mAP = tAP;
                                         tUser.mOccupation = tOccupation;
 
-                                        UpdateuserInfo(tUser);
+                                        UpdateUserInfo(tUser);
 
                                         //응답
                                         byte[] tBufferSend = new byte[1024];
@@ -406,7 +418,7 @@ namespace RPGGameServer
             return tResult;
         }
 
-        static void UpdateuserInfo(Class_User tUser)
+        static void UpdateUserInfo(Class_User tUser)
         {
             MySqlConnection tConnection;
             string tConfigString = "Server=192.168.0.11;port=8889;Database=rpggamedb;Uid=poong;Pwd=0950;";
@@ -420,11 +432,10 @@ namespace RPGGameServer
 
                 if (null != tConnection)
                 {
-                    string tKey = "update tbluserinfo set Occupation='" + tUser.mOccupation + "', HP=" + tUser.mHP + ", AttackAP=" + tUser.mAP + " where Id=" + tUser.mName + ";";
-                    MySqlCommand cmd = new MySqlCommand(tKey, tConnection);
+                    string tQuery = "update tbluserinfo set Occupation='" + tUser.mOccupation + "', HP=" + tUser.mHP + ", AttackAb=" + tUser.mAP + " where Id='" + tUser.mName + "';";
+                    MySqlCommand cmd = new MySqlCommand(tQuery, tConnection);
                     MySqlDataReader tExecuteR = cmd.ExecuteReader();
                     tExecuteR.Close();
-
                 }
             }
             catch (Exception ex)
