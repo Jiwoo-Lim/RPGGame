@@ -17,6 +17,8 @@ public class Class_Charactor : MonoBehaviour
 
     public Class_Occupation mpOccupation = null;
 
+    public Class_Singleton_User tUser = null;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -45,7 +47,7 @@ public class Class_Charactor : MonoBehaviour
                     case PROTOCOL.ACK_LOGIN:
                         {
                             Debug.Log("ACK_LOGIN");
-                            SceneManager.LoadScene("PlayScene_1");
+                            SceneManager.LoadScene("RoomSelectScene");
                         }
                         break;
                 }
@@ -61,7 +63,6 @@ public class Class_Charactor : MonoBehaviour
         Debug.Log("1P");
         mPlayer_0 = true;
         mPlayer_1 = false;
-        //SceneManager.LoadScene("PlayScene_1");
 
         mpOkBtn_0.gameObject.SetActive(true);
         mpOkBtn_1.gameObject.SetActive(false);
@@ -99,9 +100,14 @@ public class Class_Charactor : MonoBehaviour
         byte[] tAP = BitConverter.GetBytes(mpOccupation.mAP);
         int tAPLength = tAP.Length;
 
-        Class_Singleton_User.GetInst().mHP = mpOccupation.mHP;
-        Class_Singleton_User.GetInst().mAP = mpOccupation.mAP;
-        Class_Singleton_User.GetInst().mOccupation = mpOccupation.mOccupation;
+        tUser.mHP = mpOccupation.mHP;
+        tUser.mAP = mpOccupation.mAP;
+        tUser.mOccupation = mpOccupation.mOccupation;
+
+        Class_NetworkClient.GetInst().mMyUserInfo.mHP = tUser.mHP;
+        Class_NetworkClient.GetInst().mMyUserInfo.mAP = tUser.mAP;
+        Class_NetworkClient.GetInst().mMyUserInfo.mOccupation = tUser.mOccupation;
+        Class_NetworkClient.GetInst().mUserInfoes.Add(tUser);
 
         tBuffer[0] = tProtocolID;
         tBuffer[1] = (byte)tHPLength;
@@ -121,7 +127,7 @@ public class Class_Charactor : MonoBehaviour
 
     public void OnClickBtnGoPlayScene_1()
     {
-        mpOccupation.mOccupation = "Magition";
+        mpOccupation.mOccupation = "Wizard";
         mpOccupation.mHP = 500;
         mpOccupation.mAP = 1000;
 
@@ -137,9 +143,12 @@ public class Class_Charactor : MonoBehaviour
         byte[] tAP = BitConverter.GetBytes(mpOccupation.mAP);
         int tAPLength = tAP.Length;
 
-        Class_Singleton_User.GetInst().mHP = mpOccupation.mHP;
-        Class_Singleton_User.GetInst().mAP = mpOccupation.mAP;
-        Class_Singleton_User.GetInst().mOccupation = mpOccupation.mOccupation;
+        tUser.mHP = mpOccupation.mHP;
+        tUser.mAP = mpOccupation.mAP;
+        tUser.mOccupation = mpOccupation.mOccupation;
+
+        Class_NetworkClient.GetInst().mMyUserInfo = tUser;
+        Class_NetworkClient.GetInst().mUserInfoes.Add(tUser);
 
         tBuffer[0] = tProtocolID;
         tBuffer[1] = (byte)tHPLength;

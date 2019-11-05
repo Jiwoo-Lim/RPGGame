@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
+using System.Text;
 
 public class Class_RoomScene : MonoBehaviour
 {
@@ -18,7 +19,7 @@ public class Class_RoomScene : MonoBehaviour
         mMatserName.text = "RoomName : " + Class_NetworkClient.GetInst().mRoomMaster;
         StartCoroutine("UpdateFromNetwork");
 
-        if (Class_Singleton_User.GetInst().mUserName == Class_NetworkClient.GetInst().mRoomMaster) 
+        if (Class_NetworkClient.GetInst().mMyUserInfo.mUserName == Class_NetworkClient.GetInst().mRoomMaster) 
         {
             mReadyBtn.gameObject.SetActive(false);
         }
@@ -44,6 +45,40 @@ public class Class_RoomScene : MonoBehaviour
 
                 switch (tProtocolID)
                 {
+                    case PROTOCOL.ACK_JOIN_ROOM:
+                        {
+                            Debug.Log("ACK_JOIN_ROOM");
+
+                            int tUserCount = tBuffer[2];
+                            int tMasterIdLength = tBuffer[3];
+                            int tOffset = 4;
+                            tOffset += tMasterIdLength;
+                            int tRoomNameLength = tBuffer[tOffset];
+                            tOffset += 1;
+
+                            //=====
+                            int tInitPos = tOffset + tRoomNameLength;
+                            tOffset = tInitPos;
+                            for (int ti = 0; ti < tUserCount; ti++)
+                            {
+                                int tLength = (int)tBuffer[tOffset];
+                                tOffset = tOffset + 1;
+
+                                string tUserName = Encoding.UTF8.GetString(tBuffer, tOffset, tLength);
+                                tOffset = tOffset + tLength;
+
+                                Debug.Log("UserName_" + ti + " : " + tUserName);
+
+                                if (tUserName != Class_NetworkClient.GetInst().mMyUserInfo.mUserName)
+                                {
+                                    Class_Singleton_User tUser = new Class_Singleton_User();
+                                    tUser.mUserName = tUserName;
+
+                                    Class_NetworkClient.GetInst().mUserInfoes.Add(tUser);
+                                }
+                            }
+                        }
+                        break;
                     case PROTOCOL.ACK_READY:
                         {
                             Debug.Log("ACK_READY");
@@ -61,6 +96,7 @@ public class Class_RoomScene : MonoBehaviour
                             Debug.Log("ACK_BEGIN_PLAY");
 
                             SceneManager.LoadScene("PlayScene_1");
+                            SceneManager.LoadScene("AllPlayScene", LoadSceneMode.Additive);
                         }
                         break;
                 }

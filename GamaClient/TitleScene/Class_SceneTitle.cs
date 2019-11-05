@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using System.Text;
 using UnityEngine.SceneManagement;
+using System;
 
 public class Class_SceneTitle : MonoBehaviour
 {
@@ -12,6 +13,8 @@ public class Class_SceneTitle : MonoBehaviour
 
     public InputField InputId = null;
     public InputField InputPassword = null;
+
+    public Class_Singleton_User tUser = null;
 
     // Start is called before the first frame update
     void Start()
@@ -60,7 +63,28 @@ public class Class_SceneTitle : MonoBehaviour
                     case PROTOCOL.ACK_LOGIN:
                         {
                             Debug.Log("ACK_LOGIN");
-                            Class_Singleton_User.GetInst().mUserKey = tBuffer[1];
+                            int tUserKey = tBuffer[1];
+                            int tHPLength = tBuffer[2];
+                            int tOffset = 3;
+                            int tHP = BitConverter.ToInt32(tBuffer, tOffset);
+                            tOffset += sizeof(int);
+
+                            int tAPLength = tBuffer[tOffset];
+                            tOffset += 1;
+                            int tAP = BitConverter.ToInt32(tBuffer, tOffset);
+                            tOffset += sizeof(int);
+
+                            int tOccupationlength = tBuffer[tOffset];
+                            tOffset += 1;
+                            string tOccupation = Encoding.UTF8.GetString(tBuffer, tOffset, tOccupationlength);
+
+                            tUser.mUserKey = tUserKey;
+                            tUser.mHP = tHP;
+                            tUser.mAP = tAP;
+                            tUser.mOccupation = tOccupation;
+
+                            Class_NetworkClient.GetInst().mMyUserInfo = tUser;
+                            Class_NetworkClient.GetInst().mUserInfoes.Add(tUser);
 
                             SceneManager.LoadScene("RoomSelectScene");
                         }
@@ -75,10 +99,10 @@ public class Class_SceneTitle : MonoBehaviour
                     case PROTOCOL.ACK_CREATE_CHAR:
                         {
                             Debug.Log("ACK_CREATE_CHAR");
-                            Class_Singleton_User.GetInst().mUserKey = tBuffer[1];
+                            tUser.mUserKey = tBuffer[1];
+                            Class_NetworkClient.GetInst().mMyUserInfo = tUser;
 
                             SceneManager.LoadScene("CharactorScene");
-                            //SceneManager.LoadScene("RoomSelectScene");
                         }
                         break;
                 }
@@ -93,7 +117,7 @@ public class Class_SceneTitle : MonoBehaviour
         mIdComment =InputId.text;
         mPasswordComment =InputPassword.text;
 
-        Class_Singleton_User.GetInst().mUserName = mIdComment;
+        tUser.mUserName = mIdComment;
 
         byte[] tBuffer = new byte[1024];
         byte tProtocolID = (byte)PROTOCOL.REQ_LOGIN;

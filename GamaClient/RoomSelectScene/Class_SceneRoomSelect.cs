@@ -47,33 +47,35 @@ public class Class_SceneRoomSelect : MonoBehaviour
                             Class_NetworkClient.GetInst().mRoomId = tRoomId;
                             Class_NetworkClient.GetInst().mRoomMaster = tMasterId;
                             Class_NetworkClient.GetInst().mRoomName = tRoomName;
-
+ 
                             Debug.Log("mRoomMaster : " +Class_NetworkClient.GetInst().mRoomMaster);
                             Debug.Log("mRoomName : " + Class_NetworkClient.GetInst().mRoomName);
 
                             SceneManager.LoadScene("RoomScene");
+                            SceneManager.LoadScene("AllPlayScene", LoadSceneMode.Additive);
                         }   
                         break;
                     case PROTOCOL.ACK_JOIN_ROOM:
                         {
                             Debug.Log("ACK_JOIN_ROOM");
 
-                            int tRoomId                             = (int)tBuffer[1];                            
-                            int tMasterIdLength                 = (int)tBuffer[3];
-                            int tOffset                                 = 4;
-                            string tMasterId                        = Encoding.UTF8.GetString(tBuffer, tOffset, tMasterIdLength);
-                            tOffset                                     = tOffset + tMasterIdLength;
-                            int tRoomNameLength                 = (int)tBuffer[tOffset];
-                            tOffset                                     += 1;
-                            string tRoomName                     = Encoding.UTF8.GetString(tBuffer, tOffset, tRoomNameLength);
+                            int tRoomId                             = tBuffer[1];
+                            int tUserCount                         = tBuffer[2];
+                            int tMasterIdLength                 = tBuffer[3];
+                            int tOffset                               = 4;
+                            string tMasterId                      = Encoding.UTF8.GetString(tBuffer, tOffset, tMasterIdLength);
+                            tOffset                                    = tOffset + tMasterIdLength;
+                            int tRoomNameLength              = tBuffer[tOffset];
+                            tOffset                                    += 1;
+                            string tRoomName                    = Encoding.UTF8.GetString(tBuffer, tOffset, tRoomNameLength);
 
-                            int tUserCount = (int)tBuffer[2];
+                            
 
                             Debug.Log("방장 Name : " + tMasterId);
                             Debug.Log("방 Name : " + tRoomName);
 
                             //=====
-                            int tInitPos = 4 + tMasterIdLength;
+                            int tInitPos = tOffset + tRoomNameLength;
                             tOffset = tInitPos;
                             for (int ti = 0; ti < tUserCount; ti++)
                             {
@@ -84,13 +86,23 @@ public class Class_SceneRoomSelect : MonoBehaviour
                                 tOffset = tOffset + tLength;
 
                                 Debug.Log("UserName_"+ti+" : " + tUserName);
+
+                                if(tUserName != Class_NetworkClient.GetInst().mMyUserInfo.mUserName)
+                                {
+                                    Class_Singleton_User tUser = new Class_Singleton_User();
+                                    tUser.mUserName = tUserName;
+
+                                    Class_NetworkClient.GetInst().mUserInfoes.Add(tUser);
+                                }
                             }
                             //=====
 
                             Class_NetworkClient.GetInst().mRoomId = tRoomId;
                             Class_NetworkClient.GetInst().mRoomMaster = tMasterId;
+                            Class_NetworkClient.GetInst().mRoomName = tRoomName;
 
                             SceneManager.LoadScene("RoomScene");
+                            SceneManager.LoadScene("AllPlayScene", LoadSceneMode.Additive);
                         }
                         break;
                     case PROTOCOL.ACK_JOIN_ROOM_FAIL:

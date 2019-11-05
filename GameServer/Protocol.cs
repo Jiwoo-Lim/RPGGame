@@ -36,4 +36,8 @@
     REQ_BEGIN_PLAY,
     ACK_BEGIN_PLAY,
     //RoomScene End
+
+    //게임 종료시
+    REQ_QUIT_GAME,
+    ACK_QUIT_GAME,
 }
