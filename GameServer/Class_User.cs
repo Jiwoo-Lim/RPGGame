@@ -27,8 +27,11 @@ namespace RPGGameServer
         public string mOccupation = "";
         public int mHP = 0;
         public int mAP = 0;
+        public int mClearCount = 0;
 
         public bool mUserConnect = false;
+
+        public bool mIsMaster = false;
 
         public READY_PLAY mReadyPlay = READY_PLAY.NOT_READY;
 
@@ -54,7 +57,7 @@ namespace RPGGameServer
             }
 
             int tResult = mSendQueue.Enqueue(data, size);
-            Console.WriteLine("Send: " + tResult.ToString());
+            //Console.WriteLine("Send: " + tResult.ToString());
 
             return tResult;
         }
@@ -105,6 +108,12 @@ namespace RPGGameServer
                     if (recvSize == 0)
                     {
                         Console.WriteLine("Disconnect recv from client.");
+
+                        if (mUserConnect == true)
+                        {
+                            RPGGameServer.DeleteMyUserInfo(this);
+                        }
+
                         Disconnect();
                     }
                     else if (recvSize > 0)

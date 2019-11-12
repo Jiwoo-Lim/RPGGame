@@ -16,10 +16,10 @@
     REQ_CREATE_CHAR,
     //CreateCharactorScene End
 
-    //RoomSelectScene Start    
+    //RoomSelectScene Start
     REQ_CREATE_ROOM,
     ACK_CREATE_ROOM,
-    
+
     REQ_JOIN_ROOM,
     ACK_JOIN_ROOM,
     //방이 없을경우
@@ -36,6 +36,26 @@
     REQ_BEGIN_PLAY,
     ACK_BEGIN_PLAY,
     //RoomScene End
+
+    //PlayScene Start
+    REQ_START_GAME,
+    ACK_START_GAME,
+
+    REQ_TURN_OVER,
+    ACK_TURN_OVER,
+
+    REQ_GAME_CLEAR,
+    ACK_GAME_CLEAR,
+
+    REQ_GAME_FAIL,
+    ACK_GAME_FAIL,
+    //PlayScene End
+
+    //ClearScene Start
+    //ClearScene End
+
+    //FailGameScene Start
+    //FailGameScene End
 
     //게임 종료시
     REQ_QUIT_GAME,

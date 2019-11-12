@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using System.Text;
+using System;
 
 public class Class_RoomScene : MonoBehaviour
 {
@@ -95,8 +96,37 @@ public class Class_RoomScene : MonoBehaviour
                         {
                             Debug.Log("ACK_BEGIN_PLAY");
 
-                            SceneManager.LoadScene("PlayScene_1");
+                            //송신받은 게스트/방장의 정보를 상대유저정보에 입력
+                            foreach(var o in Class_NetworkClient.GetInst().mUserInfoes)
+                            {
+                                if(o.mUserName != Class_NetworkClient.GetInst().mMyUserInfo.mUserName)
+                                {
+                                    o.mUserKey = tBuffer[1];
+                                    int tHPLength = tBuffer[2];
+                                    int tOffset = 3;
+                                    o.mHP = BitConverter.ToInt32(tBuffer, tOffset);
+                                    tOffset += sizeof(int);
+                                    int tAPLength = tBuffer[tOffset];
+                                    tOffset += 1;
+                                    o.mAP = BitConverter.ToInt32(tBuffer, tOffset);
+                                    tOffset += sizeof(int);
+                                    int tOccupationLength = tBuffer[tOffset];
+                                    tOffset += 1;
+                                    o.mOccupation = Encoding.UTF8.GetString(tBuffer, tOffset, tOccupationLength);
+                                }
+                            }
+
+                            SceneManager.LoadScene("MapScene");
                             SceneManager.LoadScene("AllPlayScene", LoadSceneMode.Additive);
+                        }
+                        break;
+                    case PROTOCOL.ACK_QUIT_GAME:
+                        {
+                            #if UNITY_EDITOR
+                            UnityEditor.EditorApplication.isPlaying = false;
+                            #else
+                            Application.Quit();
+                            #endif
                         }
                         break;
                 }

@@ -226,11 +226,11 @@ public class Class_NetworkClient
         }
     }
 
-    //public void CleanTurn()
-    //{
-    //    foreach (var u in mUserInfoes)
-    //    {
-    //        u.mIsMyTurn = false;
-    //    }
-    //}
+    public void CleanTurn()
+    {
+        foreach (var u in mUserInfoes)
+        {
+            u.mMyTurn = false;
+        }
+    }
 }

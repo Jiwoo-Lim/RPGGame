@@ -10,11 +10,15 @@ using MySql.Data.MySqlClient;
 
 namespace RPGGameServer
 {
-    class RPGGameServer
+    public class RPGGameServer
     {
         static List<Class_Room> mRooms = new List<Class_Room>();
 
         static List<Class_User> mDeleteUsers = new List<Class_User>();
+
+        static MySqlConnection tConnection = new MySqlConnection();
+
+        public static Class_NetworkServer tServer = null;
 
         static void Main(string[] args)
         {
@@ -23,10 +27,14 @@ namespace RPGGameServer
             int tPort = 50765;
             int tConnectionCount = 2;
 
-            Class_NetworkServer tServer = null;
+            
 
             tServer = new Class_NetworkServer();
             tServer.StartServer(tPort, tConnectionCount);
+
+            tConnection.ConnectionString = "Server=192.168.0.11;port=8889;Database=rpggamedb;Uid=poong;Pwd=0950;";
+
+            tConnection.Open();
 
             while (true)
             {
@@ -64,6 +72,8 @@ namespace RPGGameServer
                                             tUser.mName = tId;
                                             tUser.mUserConnect = true;
 
+                                            UserConnect(tUser);
+
                                             int tOccupationlength = tUser.mOccupation.Length;
                                             byte[] tOccupation = Encoding.UTF8.GetBytes(tUser.mOccupation);
 
@@ -78,23 +88,23 @@ namespace RPGGameServer
                                             tBufferSend[2] = (byte)tHPLength;
                                             int tOffset = 3;
                                             tHP.CopyTo(tBufferSend, tOffset);
-                                            tOffset += tHPLength;
+                                            tOffset += sizeof(int);
                                             tBufferSend[tOffset] = (byte)tAPLength;
                                             tOffset += 1;
                                             tAP.CopyTo(tBufferSend, tOffset);
-                                            tOffset += tAPLength;
+                                            tOffset += sizeof(int);
                                             tBufferSend[tOffset] = (byte)tOccupationlength;
                                             tOffset += 1;
                                             tOccupation.CopyTo(tBufferSend, tOffset);
 
                                             tUser.Send(tBufferSend, tBufferSend.Length);
                                         }
-                                        else if (tUserId == -1) 
+                                        else if (tUserId == -1)
                                         {
                                             Console.WriteLine("No Exist User Id");
 
-                                            tUserId = CreateUser(tId, tPassword,tUser);
-
+                                            tUserId = CreateUser(tId, tPassword, tUser);
+                                            tUser.mUserConnect = true;
                                             tUser.mId = tUserId;
                                             tUser.mName = tId;
 
@@ -108,7 +118,7 @@ namespace RPGGameServer
                                         }
                                         else
                                         {
-                                            Console.WriteLine("Password is wrong");
+                                            Console.WriteLine("Password is wrong OR Already Connectioning");
 
                                             byte[] tBufferSend = new byte[4];
 
@@ -128,7 +138,7 @@ namespace RPGGameServer
                                         int tAPLength = tBuffer[tOffset];
                                         tOffset += 1;
                                         int tAP = BitConverter.ToInt32(tBuffer, tOffset);
-                                        tOffset += sizeof(int); 
+                                        tOffset += sizeof(int);
 
                                         int tOccupationlength = tBuffer[tOffset];
                                         tOffset += 1;
@@ -158,12 +168,13 @@ namespace RPGGameServer
                                         CreateRoom(tUser);
 
                                         tRoom.mId = tUser.mRoomId;
-                                        tRoom.mName = tUser.mName+"'s Room";
+                                        tRoom.mName = tUser.mName + "'s Room";
                                         tRoom.mMasterId = tUser.mName;
 
                                         tUser.mReadyPlay = READY_PLAY.READY;
                                         tUser.mpRoom = tRoom;
-                                        
+                                        tUser.mIsMaster = true;
+
                                         tRoom.mUsers.Add(tUser);
 
                                         mRooms.Add(tRoom);
@@ -204,7 +215,7 @@ namespace RPGGameServer
 
                                         if (tRoom != null)
                                         {
-                                            
+
 
                                             tUser.mReadyPlay = READY_PLAY.NOT_READY;
                                             tUser.mpRoom = tRoom;
@@ -231,10 +242,10 @@ namespace RPGGameServer
                                             byte[] tRoomName = Encoding.UTF8.GetBytes(tRoom.mName);
                                             tRoomName.CopyTo(tBufferSend, tOffset);
 
-                                            tOffset = tOffset + tRoom.mName.Length;
+                                            tOffset += tRoom.mName.Length;
 
                                             int ti = 0;
-                                            foreach(var u in tRoom.mUsers)
+                                            foreach (var u in tRoom.mUsers)
                                             {
                                                 tOffset += ti;
                                                 int tLength = u.mName.Length;
@@ -299,10 +310,10 @@ namespace RPGGameServer
                                                 tBufferSend[0] = (byte)PROTOCOL.ACK_ALL_READY;
 
 
-                                                Class_User tMaster = tRoom.mUsers.Find(t=>t.mName==tRoom.mMasterId);
+                                                Class_User tMaster = tRoom.mUsers.Find(t => t.mName == tRoom.mMasterId);
 
                                                 tMaster.Send(tBufferSend, tBufferSend.Length);
-                                                
+
                                             }
                                             else
                                             {
@@ -324,31 +335,87 @@ namespace RPGGameServer
                                     {
                                         Class_Room tRoom = tUser.mpRoom;
 
-                                        //유저정보 로드
+                                        Class_User tOtherUser = tRoom.mUsers.Find(u => u.mIsMaster == false);
 
                                         //응답
+                                        //방장정보를 게스트에게 송신
+                                        byte[] tHP = BitConverter.GetBytes(tUser.mHP);
+                                        int tHPLength = tHP.Length;
+                                        byte[] tAP = BitConverter.GetBytes(tUser.mAP);
+                                        int tAPLength = tAP.Length;
+                                        byte[] tOccupation = Encoding.UTF8.GetBytes(tUser.mOccupation);
+                                        int tOccupationLength = tUser.mOccupation.Length;
+
                                         byte[] tBufferSend = new byte[1024];
-
                                         tBufferSend[0] = (byte)PROTOCOL.ACK_BEGIN_PLAY;
+                                        tBufferSend[1] = (byte)tUser.mId;
 
-                                        foreach(var u in tRoom.mUsers)
-                                        {
-                                            u.Send(tBufferSend, tBufferSend.Length);
-                                        }
+                                        tBufferSend[2] = (byte)tHPLength;
+                                        int tOffset = 3;
+                                        tHP.CopyTo(tBufferSend, tOffset);
+                                        tOffset += sizeof(int);
+
+                                        tBufferSend[tOffset] = (byte)tAPLength;
+                                        tOffset += 1;
+                                        tAP.CopyTo(tBufferSend, tOffset);
+                                        tOffset += sizeof(int);
+
+                                        
+                                        tBufferSend[tOffset] = (byte)tOccupationLength;
+                                        tOffset += 1;
+                                        tOccupation.CopyTo(tBufferSend, tOffset);
+
+                                        tOtherUser.Send(tBufferSend, tBufferSend.Length);
+                                        //방장정보를 게스트에게 송신
+
+
+                                        //게스트정보를 방장에게 송신
+                                        byte[] tHP_ = BitConverter.GetBytes(tOtherUser.mHP);
+                                        int tHPLength_ = tHP_.Length;
+                                        byte[] tAP_ = BitConverter.GetBytes(tOtherUser.mAP);
+                                        int tAPLength_ = tAP_.Length;
+                                        byte[] tOccupation_ = Encoding.UTF8.GetBytes(tOtherUser.mOccupation);
+                                        int tOccupationLength_ = tOtherUser.mOccupation.Length;
+
+
+                                        byte[] tBufferSend_ = new byte[1024];
+                                        tBufferSend_[0] = (byte)PROTOCOL.ACK_BEGIN_PLAY;
+                                        tBufferSend_[1] = (byte)tOtherUser.mId;
+
+                                        tBufferSend_[2] = (byte)tHPLength_;
+                                        int tOffset_ = 3;
+                                        tHP_.CopyTo(tBufferSend_, tOffset_);
+                                        tOffset_ += sizeof(int);
+
+                                        tBufferSend_[tOffset_] = (byte)tAPLength_;
+                                        tOffset_ += 1;
+                                        tAP_.CopyTo(tBufferSend_, tOffset_);
+                                        tOffset_ += sizeof(int);
+
+
+                                        tBufferSend_[tOffset_] = (byte)tOccupationLength_;
+                                        tOffset_ += 1;
+                                        tOccupation_.CopyTo(tBufferSend_, tOffset_);
+
+                                        tUser.Send(tBufferSend_, tBufferSend_.Length);
+                                        //게스트정보를 방장에게 송신
                                     }
                                     break;
-                                case PROTOCOL.REQ_QUIT_GAME:
+                                case PROTOCOL.REQ_START_GAME:
                                     {
-                                        Class_Room tRoom = tUser.mpRoom;
-
-                                        if (tUser.mName == tRoom.mMasterId)
+                                        if(tUser.mIsMaster==true)
                                         {
-                                            DeleteRoom(tRoom);
+                                            Class_Room tRoom = tUser.mpRoom;
 
-                                            tUser.mpRoom = null;
-                                            mRooms.Remove(tRoom);
+                                            byte[] tBufferSend = new byte[1024];
 
-                                            Console.WriteLine("Delete Complete");
+                                            tBufferSend[0] = (byte)PROTOCOL.ACK_START_GAME;
+                                            tBufferSend[1] = (byte)tUser.mId;
+
+                                            foreach (var u in tRoom.mUsers)
+                                            {
+                                                u.Send(tBufferSend, tBufferSend.Length);
+                                            }
                                         }
                                         else
                                         {
@@ -356,27 +423,144 @@ namespace RPGGameServer
                                         }
                                     }
                                     break;
+                                case PROTOCOL.REQ_TURN_OVER:
+                                    {
+                                        Class_Room tRoom = tUser.mpRoom;
+
+                                        byte[] tBufferSend = new byte[1024];
+
+                                        tBufferSend[0] = (byte)PROTOCOL.ACK_TURN_OVER;
+                                        tBufferSend[1] = (byte)tUser.mId;
+
+                                        foreach(var u in tRoom.mUsers)
+                                        {
+                                            u.Send(tBufferSend, tBufferSend.Length);
+                                        }
+                                    }
+                                    break;
+                                case PROTOCOL.REQ_GAME_CLEAR:
+                                    {
+                                        Class_Room tRoom = tUser.mpRoom;
+
+                                        //데이터베이스에 클리어에대한 보상 업데이트
+
+                                        ClearUserUpdate(tUser);
+                                        //데이터베이스에 클리어에대한 보상 업데이트
+
+                                        //유저에게 보여줘야할 1등의 데이터 로드
+                                        Class_User tFirstUser = new Class_User();
+
+                                        FirstUserLoad(tFirstUser);
+                                        //유저에게 보여줘야할 1등의 데이터 로드
+
+                                        //응답
+                                        byte[] tHP = BitConverter.GetBytes(tFirstUser.mHP);
+                                        int tHPLength = tHP.Length;
+                                        byte[] tAP = BitConverter.GetBytes(tFirstUser.mAP);
+                                        int tAPLength = tAP.Length;
+                                        byte[] tName = Encoding.UTF8.GetBytes(tFirstUser.mName);
+                                        int tNameLength = tFirstUser.mName.Length;
+                                        byte[] tOccupation = Encoding.UTF8.GetBytes(tFirstUser.mOccupation);
+                                        int tOccupationLength = tFirstUser.mOccupation.Length;
+
+                                        byte[] tBufferSend = new byte[1024];
+
+                                        tBufferSend[0] = (byte)PROTOCOL.ACK_GAME_CLEAR;
+                                        tBufferSend[1] = (byte)tFirstUser.mClearCount;
+
+                                        tBufferSend[2] = (byte)tHPLength;
+                                        int tOffset = 3;
+                                        tHP.CopyTo(tBufferSend, tOffset);
+                                        tOffset += sizeof(int);
+
+                                        tBufferSend[tOffset] = (byte)tAPLength;
+                                        tOffset += 1;
+                                        tAP.CopyTo(tBufferSend, tOffset);
+                                        tOffset += sizeof(int);
+
+                                        tBufferSend[tOffset] = (byte)tNameLength;
+                                        tOffset += 1;
+                                        tName.CopyTo(tBufferSend, tOffset);
+                                        tOffset += tNameLength;
+
+                                        tBufferSend[tOffset] = (byte)tOccupationLength;
+                                        tOffset += 1;
+                                        tOccupation.CopyTo(tBufferSend, tOffset);
+
+                                        tUser.Send(tBufferSend, tBufferSend.Length);
+                                    }
+                                    break;
+                                case PROTOCOL.REQ_GAME_FAIL:
+                                    {
+
+                                    }
+                                    break;
+                                case PROTOCOL.REQ_QUIT_GAME:
+                                    {
+                                        DeleteMyUserInfo(tUser);
+                                    }
+                                    break;
                             }
                         }
                     }
                 }
+                tServer.mUsers.RemoveAll(mDeleteUsers.Contains);
+
+                mDeleteUsers.RemoveAll(mDeleteUsers.Contains);
             }
+            tConnection.Close();
         }
 
-        static int IsMember(string tId, string tPassword,Class_User tUser)
+        public static void DeleteMyUserInfo(Class_User tUser)
+        {
+            if (tUser.mpRoom != null)
+            {
+                Class_Room tRoom = tUser.mpRoom;
+                
+
+                if (tUser.mName == tRoom.mMasterId)
+                {
+                    Class_User tOtherUser = tRoom.mUsers.Find(u => u.mIsMaster == false);
+
+                    //방장이 접속종료 할 시에 게스트도 강제 게임종료시킴.
+                    byte[] tBufferSend = new byte[1024];
+                    tBufferSend[0] = (byte)PROTOCOL.ACK_QUIT_GAME;
+                    if (tOtherUser != null)
+                    {
+                        tOtherUser.Send(tBufferSend, tBufferSend.Length);
+                    }
+                    //방장이 접속종료 할 시에 게스트도 강제 게임종료시킴.
+
+                    DeleteRoom(tRoom);
+
+                    tUser.mpRoom = null;
+                    mRooms.Remove(tRoom);
+                    mDeleteUsers.Add(tUser);
+                    Console.WriteLine("Delete Complete");
+                }
+                else
+                {
+                    ExitRoom(tUser);
+                    tRoom.mUsers.Remove(tUser);
+                    mDeleteUsers.Add(tUser);
+                    Console.WriteLine("Not Room Master");
+                }
+            }
+            else
+            {
+                ExitRoom(tUser);
+                mDeleteUsers.Add(tUser);
+            }
+
+            tUser.mUserConnect = false;
+        }
+
+        public static int IsMember(string tId, string tPassword,Class_User tUser)
         {
             int tResult = -1;
 
-            MySqlConnection tConnection;
-            string tConfigString = "Server=192.168.0.11;port=8889;Database=rpggamedb;Uid=poong;Pwd=0950;";
-
-            tConnection = new MySqlConnection(tConfigString);
-
             try
             {
-                tConnection.Open();
-                Console.WriteLine("tConnection is opened.");
-
                 if (null != tConnection)
                 {
                     string tQuery = "SELECT * FROM tbluserinfo where id='" + tId + "';";
@@ -386,7 +570,7 @@ namespace RPGGameServer
 
                     while (tExecuteR.Read())
                     {
-                        if (tExecuteR["Password"].ToString() == tPassword)
+                        if (tExecuteR["Password"].ToString() == tPassword&&(bool)tExecuteR["Connect"]==false)
                         {
                             tResult = (int)tExecuteR["Key"];
                             tUser.mOccupation = tExecuteR["Occupation"].ToString();
@@ -397,8 +581,6 @@ namespace RPGGameServer
                         {
                             tResult = -2;
                         }
-
-                        tUser.mName = tExecuteR["Id"].ToString();
                     }
                     tExecuteR.Close();
                 }
@@ -407,24 +589,34 @@ namespace RPGGameServer
             {
                 Console.WriteLine("No Exist User Id");
             }
-            tConnection.Close();
             return tResult;
         }
 
-        static int CreateUser(string tId, string tPassword, Class_User tUser)
+        public static void UserConnect(Class_User tUser)
+        {
+            try
+            {
+                if (null != tConnection)
+                {
+                    string tQuery = "Update tbluserinfo set Connect=true where id='" + tUser.mName + "';";
+                    MySqlCommand cmd = new MySqlCommand(tQuery, tConnection);
+                    MySqlDataReader tExecuteR = cmd.ExecuteReader();
+
+                    tExecuteR.Close();
+                }
+            }
+            catch
+            {
+                Console.WriteLine("No Exist User Id");
+            }
+        }
+
+        public static int CreateUser(string tId, string tPassword, Class_User tUser)
         {
             int tResult = -1;
 
-            MySqlConnection tConnection;
-            string tConfigString = "Server=192.168.0.11;port=8889;Database=rpggamedb;Uid=poong;Pwd=0950;";
-
-            tConnection = new MySqlConnection(tConfigString);
-
             try
             {
-                tConnection.Open();
-                Console.WriteLine("tConnection is opened.");
-
                 if (null != tConnection)
                 {
                     string tKey = "select rpggamedb.tbluserinfo.key from rpggamedb.tbluserinfo order by rpggamedb.tbluserinfo.key desc limit 1;";
@@ -439,7 +631,7 @@ namespace RPGGameServer
                     }
                     tExecuteR.Close();
 
-                    string tQuery = "insert into tbluserinfo values(" + tKey_ + ",'" + tId + "','" + tPassword + "','null',0,0,0,0);";
+                    string tQuery = "insert into tbluserinfo values(" + tKey_ + ",'" + tId + "','" + tPassword + "','null',0,0,0,0,true);";
                     Console.WriteLine(tQuery);
                     MySqlCommand cmd_ = new MySqlCommand(tQuery, tConnection);
                     MySqlDataReader tExecuteR_ = cmd_.ExecuteReader();
@@ -455,22 +647,13 @@ namespace RPGGameServer
                 Console.WriteLine(ex);
                 Console.WriteLine("Connection is not valid.");
             }
-            tConnection.Close();
             return tResult;
         }
 
-        static void UpdateUserInfo(Class_User tUser)
+        public static void UpdateUserInfo(Class_User tUser)
         {
-            MySqlConnection tConnection;
-            string tConfigString = "Server=192.168.0.11;port=8889;Database=rpggamedb;Uid=poong;Pwd=0950;";
-
-            tConnection = new MySqlConnection(tConfigString);
-
             try
             {
-                tConnection.Open();
-                Console.WriteLine("tConnection is opened.");
-
                 if (null != tConnection)
                 {
                     string tQuery = "update tbluserinfo set Occupation='" + tUser.mOccupation + "', HP=" + tUser.mHP + ", AttackAb=" + tUser.mAP + " where tbluserinfo.key=" + tUser.mId + ";";
@@ -484,19 +667,13 @@ namespace RPGGameServer
                 Console.WriteLine(ex);
                 Console.WriteLine("Connection is not valid.");
             }
-            tConnection.Close();
         }
 
-        static void CreateRoom(Class_User tUser)
+        public static void CreateRoom(Class_User tUser)
         {
-            MySqlConnection tConnection = new MySqlConnection();
-            tConnection.ConnectionString = "Server=192.168.0.11;port=8889;Database=rpggamedb;Uid=poong;Pwd=0950;";
-            MySqlCommand cmd = new MySqlCommand();
-
             try
             {
-                tConnection.Open();
-                Console.WriteLine("tConnection is opened.");
+                MySqlCommand cmd = new MySqlCommand();
                 cmd.Connection = tConnection;
 
                 cmd.CommandText = "CreateRoom";
@@ -519,30 +696,18 @@ namespace RPGGameServer
             {
                 Console.WriteLine(ex);
             }
-            tConnection.Close();
         }
 
-        static void UpdateJoinUser(Class_Room tRoom, Class_User tUser)
+        public static void UpdateJoinUser(Class_Room tRoom, Class_User tUser)
         {
-            MySqlConnection tConnection = new MySqlConnection();
-            tConnection.ConnectionString = "Server=192.168.0.11;port=8889;Database=rpggamedb;Uid=poong;Pwd=0950;";
-            MySqlCommand cmd = new MySqlCommand();
-
             try
             {
-                tConnection.Open();
-                Console.WriteLine("tConnection is opened.");
+                MySqlCommand cmd = new MySqlCommand();
+
                 cmd.Connection = tConnection;
 
                 cmd.CommandText = "UpdateJoinUser";
                 cmd.CommandType = CommandType.StoredProcedure;
-
-                    //test
-                    Console.WriteLine(tRoom.mId);
-                    Console.WriteLine(tUser.mId);
-
-                    //tRoom.mId = 1;
-                    //tUser.mId = 3;
 
                 cmd.Parameters.AddWithValue("tRoomId", tRoom.mId);
                 cmd.Parameters["tRoomId"].Direction = ParameterDirection.Input;
@@ -556,19 +721,14 @@ namespace RPGGameServer
             {
                 Console.WriteLine(ex);
             }
-            tConnection.Close();
         }
 
-        static void DeleteRoom(Class_Room tRoom)
+        public static void DeleteRoom(Class_Room tRoom)
         {
-            MySqlConnection tConnection = new MySqlConnection();
-            tConnection.ConnectionString = "Server=192.168.0.11;port=8889;Database=rpggamedb;Uid=poong;Pwd=0950;";
-            MySqlCommand cmd = new MySqlCommand();
-
             try
             {
-                tConnection.Open();
-                Console.WriteLine("tConnection is opened.");
+                MySqlCommand cmd = new MySqlCommand();
+
                 cmd.Connection = tConnection;
 
                 cmd.CommandText = "DeleteRoom";
@@ -583,7 +743,80 @@ namespace RPGGameServer
             {
                 Console.WriteLine("No Exist Room");
             }
-            tConnection.Close();
+        }
+
+        public static void ExitRoom(Class_User tUser)
+        {
+            try
+            {
+                if (null != tConnection)
+                {
+                    string tQuery = "update tbluserinfo set Room_Id=0,Connect=false where tbluserinfo.key=" + tUser.mId + ";";
+                    MySqlCommand cmd = new MySqlCommand(tQuery, tConnection);
+                    MySqlDataReader tExecuteR = cmd.ExecuteReader();
+                    tExecuteR.Close();
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+            }
+        }
+
+        public static void ClearUserUpdate(Class_User tUser)
+        {
+            try
+            {
+                if (null != tConnection)
+                {
+                    if (tUser.mOccupation == "Warrior")
+                    {
+                        string tQuery = "update tbluserinfo set ClearCount=ClearCount+1,HP=HP+50,AttackAb=AttackAb+30 where tbluserinfo.key=" + tUser.mId + ";";
+                        MySqlCommand cmd = new MySqlCommand(tQuery, tConnection);
+                        MySqlDataReader tExecuteR = cmd.ExecuteReader();
+                        tExecuteR.Close();
+                    }
+                    else
+                    {
+                        string tQuery = "update tbluserinfo set ClearCount=ClearCount+1,HP=HP+30,AttackAb=AttackAb+50 where tbluserinfo.key=" + tUser.mId + ";";
+                        MySqlCommand cmd = new MySqlCommand(tQuery, tConnection);
+                        MySqlDataReader tExecuteR = cmd.ExecuteReader();
+                        tExecuteR.Close();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+            }
+        }
+
+        public static void FirstUserLoad(Class_User tFirstUser)
+        {
+            try
+            {
+                if (null != tConnection)
+                {
+                    string tQuery = "Select * from tbluserinfo order by tbluserinfo.ClearCount desc limit 1";
+                    MySqlCommand cmd = new MySqlCommand(tQuery, tConnection);
+                    MySqlDataReader tExecuteR = cmd.ExecuteReader();
+
+                    while (tExecuteR.Read())
+                    {
+                        tFirstUser.mName = tExecuteR["Id"].ToString();
+                        tFirstUser.mOccupation = tExecuteR["Occupation"].ToString();
+                        tFirstUser.mHP = (int)tExecuteR["HP"];
+                        tFirstUser.mAP = (int)tExecuteR["AttackAb"];
+                        tFirstUser.mClearCount = (int)tExecuteR["ClearCount"];
+                    }
+
+                    tExecuteR.Close();
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+            }
         }
     }
 }

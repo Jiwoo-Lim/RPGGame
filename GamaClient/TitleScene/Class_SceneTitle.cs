@@ -87,6 +87,7 @@ public class Class_SceneTitle : MonoBehaviour
                             Class_NetworkClient.GetInst().mUserInfoes.Add(tUser);
 
                             SceneManager.LoadScene("RoomSelectScene");
+                            SceneManager.LoadScene("AllPlayScene", LoadSceneMode.Additive);
                         }
                         break;
                     case PROTOCOL.ACK_LOGIN_FAIL:
@@ -103,11 +104,20 @@ public class Class_SceneTitle : MonoBehaviour
                             Class_NetworkClient.GetInst().mMyUserInfo = tUser;
 
                             SceneManager.LoadScene("CharactorScene");
+                            SceneManager.LoadScene("AllPlayScene", LoadSceneMode.Additive);
+                        }
+                        break;
+                    case PROTOCOL.ACK_QUIT_GAME:
+                        {
+                            #if UNITY_EDITOR
+                            UnityEditor.EditorApplication.isPlaying = false;
+                            #else
+                            Application.Quit();
+                            #endif
                         }
                         break;
                 }
             }
-
             yield return new WaitForSeconds(0.05f);
         }
     }

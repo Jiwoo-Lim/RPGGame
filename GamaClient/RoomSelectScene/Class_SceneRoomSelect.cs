@@ -110,6 +110,15 @@ public class Class_SceneRoomSelect : MonoBehaviour
                             Debug.Log("Join Room Fail..");
                         }
                         break;
+                    case PROTOCOL.ACK_QUIT_GAME:
+                        {
+                            #if UNITY_EDITOR
+                            UnityEditor.EditorApplication.isPlaying = false;
+                            #else
+                            Application.Quit();
+                            #endif
+                        }
+                        break;
                 }
             }
             yield return new WaitForSeconds(0.05f);

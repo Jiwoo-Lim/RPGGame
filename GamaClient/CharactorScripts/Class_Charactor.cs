@@ -48,12 +48,20 @@ public class Class_Charactor : MonoBehaviour
                         {
                             Debug.Log("ACK_LOGIN");
                             SceneManager.LoadScene("RoomSelectScene");
+                            SceneManager.LoadScene("AllPlayScene", LoadSceneMode.Additive);
+                        }
+                        break;
+                    case PROTOCOL.ACK_QUIT_GAME:
+                        {
+                            #if UNITY_EDITOR
+                            UnityEditor.EditorApplication.isPlaying = false;
+                            #else
+                            Application.Quit();
+                            #endif
                         }
                         break;
                 }
             }
-
-
             yield return new WaitForSeconds(0.05f);
         }
     }
@@ -154,11 +162,11 @@ public class Class_Charactor : MonoBehaviour
         tBuffer[1] = (byte)tHPLength;
         int tOffset = 2;
         tHP.CopyTo(tBuffer, tOffset);
-        tOffset += tHPLength;
+        tOffset += sizeof(int);
         tBuffer[tOffset] = (byte)tAPLength;
         tOffset += 1;
         tAP.CopyTo(tBuffer, tOffset);
-        tOffset += tAPLength;
+        tOffset += sizeof(int);
         tBuffer[tOffset] = (byte)tOccupationlength;
         tOffset += 1;
         tOccupation.CopyTo(tBuffer, tOffset);
