@@ -40,6 +40,7 @@ namespace RPGGameServer
             {
                 Thread.Sleep(1);
 
+
                 foreach (var tUser in tServer.mUsers)
                 {
                     if (tUser.mSocketForClient != null)
@@ -440,10 +441,7 @@ namespace RPGGameServer
                                     break;
                                 case PROTOCOL.REQ_GAME_CLEAR:
                                     {
-                                        Class_Room tRoom = tUser.mpRoom;
-
                                         //데이터베이스에 클리어에대한 보상 업데이트
-
                                         ClearUserUpdate(tUser);
                                         //데이터베이스에 클리어에대한 보상 업데이트
 
@@ -492,21 +490,33 @@ namespace RPGGameServer
                                     break;
                                 case PROTOCOL.REQ_GAME_FAIL:
                                     {
+                                        byte[] tBufferSend = new byte[1024];
 
+                                        tBufferSend[0] = (byte)PROTOCOL.ACK_GAME_FAIL;
+
+                                        tUser.Send(tBufferSend, tBufferSend.Length);
                                     }
                                     break;
                                 case PROTOCOL.REQ_QUIT_GAME:
                                     {
-                                        DeleteMyUserInfo(tUser);
+                                        //ryu
+                                        lock (tServer.lockObject)
+                                        {
+                                            DeleteMyUserInfo(tUser);
+                                        }
                                     }
                                     break;
                             }
                         }
                     }
                 }
-                tServer.mUsers.RemoveAll(mDeleteUsers.Contains);
-
-                mDeleteUsers.RemoveAll(mDeleteUsers.Contains);
+                //임계영역
+                //mutex
+                lock (tServer.lockObject)
+                {
+                    tServer.mUsers.RemoveAll(mDeleteUsers.Contains);
+                    mDeleteUsers.RemoveAll(mDeleteUsers.Contains);
+                }
             }
             tConnection.Close();
         }
@@ -550,6 +560,7 @@ namespace RPGGameServer
             {
                 ExitRoom(tUser);
                 mDeleteUsers.Add(tUser);
+                Console.WriteLine("User End Connected");
             }
 
             tUser.mUserConnect = false;

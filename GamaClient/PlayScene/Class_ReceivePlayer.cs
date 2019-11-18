@@ -9,8 +9,12 @@ using System.Threading;
 
 public class Class_ReceivePlayer : MonoBehaviour
 {
+    private Class_ReceiveWarrior mpReceiveWarrior = null;
+    private Class_ReceiveWizard mpReceiveWizard = null;
     private Class_Warrior mpWarrior = null;
     private Class_Wizard mpWizard = null;
+    private Class_PlayerUI mpPlayerUI = null;
+    private Class_ReceivePlayerUI mpReceivePlayerUI = null;
 
     //receiving Thread
     Thread receiveThread;
@@ -23,10 +27,23 @@ public class Class_ReceivePlayer : MonoBehaviour
     Vector3 tReceivePlayerPos = Vector3.zero;
     Quaternion tReceivePlayerRotation = Quaternion.identity;
 
-    void Start()
+    public float tHorizontal = 0.0f;
+    public float tVertical = 0.0f;
+    public int tSpace = 0;
+    public int tCount = 0;
+    public int tEnemyCount = 0;
+
+    void Awake()
     {
+        mpReceiveWizard = this.GetComponentInChildren<Class_ReceiveWizard>();
+        mpReceiveWarrior = this.GetComponentInChildren<Class_ReceiveWarrior>();
         mpWizard = this.GetComponentInChildren<Class_Wizard>();
         mpWarrior = this.GetComponentInChildren<Class_Warrior>();
+        mpPlayerUI = this.GetComponentInChildren<Class_PlayerUI>();
+        mpReceivePlayerUI = this.GetComponentInChildren<Class_ReceivePlayerUI>();
+
+        Destroy(mpPlayerUI);
+
         string tOtherPlayerOccupation = "";
         foreach (var u in Class_NetworkClient.GetInst().mUserInfoes)
         {
@@ -38,15 +55,18 @@ public class Class_ReceivePlayer : MonoBehaviour
 
         if (tOtherPlayerOccupation == "Warrior")
         {
-            mpWizard.gameObject.SetActive(false);
-            Destroy(mpWizard);
+            Destroy(mpReceiveWizard.gameObject);
+            Destroy(mpWarrior);
         }
         else
         {
-            mpWarrior.gameObject.SetActive(false);
-            Destroy(mpWarrior);
+            Destroy(mpReceiveWarrior.gameObject);
+            Destroy(mpWizard);
         }
+    }
 
+    void Start()
+    {
         init();
 
         if (Class_NetworkClient.GetInst().mMyUserInfo.mUserName == Class_NetworkClient.GetInst().mRoomMaster)
@@ -101,11 +121,9 @@ public class Class_ReceivePlayer : MonoBehaviour
 
                 Thread.Sleep(5);
 
-                float tX = tPlayerPos.x;
-                float tY = tPlayerPos.y;
-                float tZ = tPlayerPos.z;
-                float tRY = tPlayerPos.ry;
-                foreach(var u in Class_NetworkClient.GetInst().mUserInfoes)
+                tReceivePlayerPos = new Vector3(tPlayerPos.x, tPlayerPos.y, tPlayerPos.z);
+                tReceivePlayerRotation = Quaternion.Euler(0f, tPlayerPos.ry, 0f);
+                foreach (var u in Class_NetworkClient.GetInst().mUserInfoes)
                 {
                     if (u.mUserName != Class_NetworkClient.GetInst().mMyUserInfo.mUserName)
                     {
@@ -113,8 +131,14 @@ public class Class_ReceivePlayer : MonoBehaviour
                     }
                 }
 
-                tReceivePlayerPos = new Vector3(tX, tY, tZ);
-                tReceivePlayerRotation = Quaternion.Euler(0f, tRY, 0f);
+                tHorizontal = tPlayerPos.tHorizontal;
+                tVertical = tPlayerPos.tVertical;
+
+                tSpace = tPlayerPos.Space;
+
+                tCount = tPlayerPos.tCount;
+
+                tEnemyCount = tPlayerPos.tEnemyCount;
             }
             catch (Exception err)
             {

@@ -7,9 +7,31 @@ using UnityEngine.SceneManagement;
 
 public class Class_PlayScene : MonoBehaviour
 {
+    public Class_ItemSpawn mpItemSpawn = null;
+    private Class_EnemyJon mpEnemySpawn = null;
+
+    public Class_Stage_1 mpStage_1 = null;
+    public Class_Stage_1_guest mpStage_1_guest = null;
+    public Class_Stage_2 mpStage_2 = null;
+    public Class_Stage_2_guest mpStage_2_guest = null;
+
+    private Class_Player mpPlayer = null;
+    private Class_ReceivePlayer mpReceivePlayer = null;
+
+    public enum STAGE
+    {
+        Stage_1 = 0,
+        Stage_2,
+        Stage_3
+    }
+    public STAGE mStage = STAGE.Stage_1;
+
     void Awake()
     {
-        if(Class_NetworkClient.GetInst().mMyUserInfo.mUserName==Class_NetworkClient.GetInst().mRoomMaster)
+        mpItemSpawn = FindObjectOfType<Class_ItemSpawn>();
+        mpEnemySpawn= FindObjectOfType<Class_EnemyJon>();
+
+        if (Class_NetworkClient.GetInst().mMyUserInfo.mUserName==Class_NetworkClient.GetInst().mRoomMaster)
         {
             GameObject PFPlayer_0 = Resources.Load<GameObject>("Prefabs/PFPlayer_0");
             GameObject PFPlayer_1 = Resources.Load<GameObject>("Prefabs/PFPlayer_1");
@@ -19,6 +41,9 @@ public class Class_PlayScene : MonoBehaviour
             MyPlayer.AddComponent<Class_Player>();
             OtherPlayer.AddComponent<Class_ReceivePlayer>();
 
+            mpItemSpawn.StartSpawnItem(true);
+
+            //TCP 게임시작 요청
             byte[] tBuffer = new byte[1024];
 
             tBuffer[0] = (byte)PROTOCOL.REQ_START_GAME;
@@ -40,12 +65,71 @@ public class Class_PlayScene : MonoBehaviour
     void Start()
     {
         StartCoroutine("UpdateFromNetwork");
+
+        mpPlayer = FindObjectOfType<Class_Player>();
+        mpReceivePlayer = FindObjectOfType<Class_ReceivePlayer>();
     }
 
     // Update is called once per frame
     void Update()
     {
-        
+        switch (mStage)
+        {
+            case STAGE.Stage_1:
+                {
+                    if (Class_NetworkClient.GetInst().mMyUserInfo.mUserName == Class_NetworkClient.GetInst().mRoomMaster)
+                    {
+                        if (mpPlayer.tCount <= 0)
+                        {
+                            mpStage_1.gameObject.SetActive(true);
+                        }
+                        else if (mpReceivePlayer.tCount <= 0)
+                        {
+                            mpStage_1_guest.gameObject.SetActive(true);
+                        }
+                    }
+                    else
+                    {
+                        if (mpPlayer.tCount <= 0)
+                        {
+                            mpStage_1_guest.gameObject.SetActive(true);
+                        }
+                        else if (mpReceivePlayer.tCount <= 0)
+                        {
+                            mpStage_1.gameObject.SetActive(true);
+                        }
+                    }
+                }
+                break;
+            case STAGE.Stage_2:
+                {
+                    if (Class_NetworkClient.GetInst().mMyUserInfo.mUserName == Class_NetworkClient.GetInst().mRoomMaster)
+                    {
+                        if (mpPlayer.tEnemyCount <= 0)
+                        {
+                            mpStage_2.gameObject.SetActive(true);
+                        }
+                        else if (mpReceivePlayer.tEnemyCount <= 0)
+                        {
+                            mpStage_2_guest.gameObject.SetActive(true);
+                        }
+                    }
+                    else
+                    {
+                        if (mpPlayer.tEnemyCount <= 0)
+                        {
+                            mpStage_2_guest.gameObject.SetActive(true);
+                        }
+                        else if (mpReceivePlayer.tEnemyCount <= 0)
+                        {
+                            mpStage_2.gameObject.SetActive(true);
+                        }
+                    }
+                }
+                break;
+            case STAGE.Stage_3:
+                break;
+        }
     }
 
     IEnumerator UpdateFromNetwork()
@@ -94,6 +178,26 @@ public class Class_PlayScene : MonoBehaviour
                             {
                                 Class_NetworkClient.GetInst().CleanTurn();
                                 Class_NetworkClient.GetInst().mMyUserInfo.mMyTurn = true;
+
+                                switch (mStage)
+                                {
+                                    case STAGE.Stage_1:
+                                        if (Class_NetworkClient.GetInst().mRoomMaster != Class_NetworkClient.GetInst().mMyUserInfo.mUserName)
+                                        {
+                                            if (mpItemSpawn.mSpawn == false)
+                                            {
+                                                mpItemSpawn.StartSpawnItem(true);
+                                            }
+                                        }
+                                        break;
+                                    case STAGE.Stage_2:
+                                        {
+                                            mpEnemySpawn.SpawnEnemy();
+                                        }
+                                            break;
+                                    case STAGE.Stage_3:
+                                        break;
+                                }
                             }
                         }
                         break;
@@ -129,6 +233,14 @@ public class Class_PlayScene : MonoBehaviour
                             //서버에서 받은 데이터 입력
 
                             SceneManager.LoadScene("ClearScene");
+                            SceneManager.LoadScene("AllPlayScene", LoadSceneMode.Additive);
+                        }
+                        break;
+                    case PROTOCOL.ACK_GAME_FAIL:
+                        {
+                            Debug.Log("ACK_GAME_FAIL");
+
+                            SceneManager.LoadScene("FailScene");
                             SceneManager.LoadScene("AllPlayScene", LoadSceneMode.Additive);
                         }
                         break;

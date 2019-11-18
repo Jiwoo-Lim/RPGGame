@@ -11,17 +11,15 @@ namespace RPGGameServer
         private Socket mSocketForListen = null;
 
         public List<Class_User> mUsers = new List<Class_User>();
-
-        private bool mIsConnected = false;
-
         protected bool mThreadLoop = false;
         protected Thread mThread = null;
-
-        Stack<int> mUserIds = new Stack<int>();
+        
+        //락,임계영역 자물쇠( mutex role )
+        public Object lockObject = new Object();
 
         public bool StartServer(int port, int tConnectionNum)
         {
-            Console.WriteLine("StartServer coalled.");
+            Console.WriteLine("         StartServer");
             try
             {
                 //소켓생성
@@ -100,25 +98,29 @@ namespace RPGGameServer
 
         public void Dispatch()
         {
-            Console.WriteLine("Dispatch thread started.");
+            Console.WriteLine("    Start Dispatch thread");
 
             while (mThreadLoop)
             {
                 AcceptClient();
 
-                foreach (var tUser in mUsers)
+                //mutex
+                lock (this.lockObject)
                 {
-                    if (tUser != null)
+                    foreach (var tUser in mUsers)
                     {
-                        if (tUser.mSocketForClient != null)
+                        if (tUser != null)
                         {
-                            DispatchSend(tUser);
+                            if (tUser.mSocketForClient != null)
+                            {
+                                DispatchSend(tUser);
 
-                            DispatchReceive(tUser);
+                                DispatchReceive(tUser);
+                            }
                         }
                     }
                 }
-                Thread.Sleep(5);
+                Thread.Sleep(1);
             }
             Console.WriteLine("Dispatch thread ended.");
         }

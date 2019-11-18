@@ -15,4 +15,13 @@ public class Class_ReceivePlayerPos
     public float ry = 0;
 
     public int HP = 0;
+
+    public float tHorizontal = 0f;
+    public float tVertical = 0f;
+
+    public int Space = 0;
+
+    public int tCount = 0;
+
+    public int tEnemyCount = 0;
 }

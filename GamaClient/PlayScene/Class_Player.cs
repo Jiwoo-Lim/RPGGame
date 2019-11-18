@@ -11,6 +11,14 @@ public class Class_Player : MonoBehaviour
 {
     private Class_Warrior mpWarrior = null;
     private Class_Wizard mpWizard = null;
+    private Class_ReceiveWarrior mpReceiveWarrior = null;
+    private Class_ReceiveWizard mpReceiveWizard = null;
+    private Class_PlayerUI mpPlayerUI = null;
+    private Class_ReceivePlayerUI mpReceivePlayerUI = null;
+    private Class_PlayScene mpPlayScene = null;
+
+    public Class_EnemyJon mpEnemySpawn = null;
+    public Class_ItemSpawn mpItemSpawn = null;
 
     private static int localPort;
 
@@ -22,26 +30,42 @@ public class Class_Player : MonoBehaviour
 
     string strMessage = "";
 
-    float tHorizontal = 0.0f;
-    float tVertical = 0.0f;
+    public float tHorizontal = 0.0f;
+    public float tVertical = 0.0f;
     public float mSpeedScalar = 5.0f;
+    public int tSpace = 0;
+    public int tCount = 5;
+    public int tEnemyCount = 10;
 
-    // Start is called before the first frame update
-    void Start()
+    void Awake()
     {
+        mpItemSpawn = FindObjectOfType<Class_ItemSpawn>();
+        mpEnemySpawn = FindObjectOfType<Class_EnemyJon>();
+        mpPlayScene = FindObjectOfType<Class_PlayScene>();
+
         mpWizard = this.GetComponentInChildren<Class_Wizard>();
         mpWarrior = this.GetComponentInChildren<Class_Warrior>();
+        mpReceiveWizard = this.GetComponentInChildren<Class_ReceiveWizard>();
+        mpReceiveWarrior = this.GetComponentInChildren<Class_ReceiveWarrior>();
+        mpPlayerUI = this.GetComponentInChildren<Class_PlayerUI>();
+        mpReceivePlayerUI = this.GetComponentInChildren<Class_ReceivePlayerUI>();
+
+        Destroy(mpReceivePlayerUI);
+
         if (Class_NetworkClient.GetInst().mMyUserInfo.mOccupation == "Warrior")
         {
-            mpWizard.gameObject.SetActive(false);
-            Destroy(mpWizard);
+            Destroy(mpWizard.gameObject);
+            Destroy(mpReceiveWarrior);
         }
         else
         {
-            mpWarrior.gameObject.SetActive(false);
-            Destroy(mpWarrior);
+            Destroy(mpWarrior.gameObject);
+            Destroy(mpReceiveWizard);
         }
+    }
 
+    void Start()
+    {
         init();
 
         StartCoroutine("UpdatePos");
@@ -61,7 +85,12 @@ public class Class_Player : MonoBehaviour
             mMoveDir = tHorizontal * Vector3.right + tVertical * Vector3.forward;
 
             this.transform.Translate(mMoveDir * Time.deltaTime * mSpeedScalar, Space.World);
-            this.transform.forward = Vector3.Lerp(this.transform.forward, mMoveDir, Time.deltaTime*10);
+            this.transform.forward = Vector3.Lerp(this.transform.forward, mMoveDir, Time.deltaTime * 10);
+        }
+
+        if (tCount <= 0 && mpPlayScene.mStage==Class_PlayScene.STAGE.Stage_1)
+        {
+            mpItemSpawn.StartSpawnItem(false);
         }
     }
 
@@ -75,6 +104,11 @@ public class Class_Player : MonoBehaviour
             tSendPlayerPos.z = this.transform.position.z;
             tSendPlayerPos.ry = this.transform.rotation.eulerAngles.y;
             tSendPlayerPos.HP = Class_NetworkClient.GetInst().mMyUserInfo.mHP;
+            tSendPlayerPos.tHorizontal = tHorizontal;
+            tSendPlayerPos.tVertical = tVertical;
+            tSendPlayerPos.Space = tSpace;
+            tSendPlayerPos.tCount = tCount;
+            tSendPlayerPos.tEnemyCount = tEnemyCount;
 
             strMessage = JsonUtility.ToJson(tSendPlayerPos);
             sendString(strMessage + "\n");
@@ -115,6 +149,15 @@ public class Class_Player : MonoBehaviour
         catch (Exception err)
         {
             print(err.ToString());
+        }
+    }
+
+    private void OnTriggerEnter(Collider tCollider)
+    {
+        if (tCollider.CompareTag("TagItem"))
+        {
+            tCount -= 1;
+            Destroy(tCollider.gameObject);
         }
     }
 }

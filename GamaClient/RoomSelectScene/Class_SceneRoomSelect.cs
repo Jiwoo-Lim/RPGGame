@@ -4,9 +4,12 @@ using UnityEngine;
 using System;
 using UnityEngine.SceneManagement;
 using System.Text;
+using UnityEngine.UI;
 
 public class Class_SceneRoomSelect : MonoBehaviour
 {
+    public Text mpTxt = null;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -108,6 +111,10 @@ public class Class_SceneRoomSelect : MonoBehaviour
                     case PROTOCOL.ACK_JOIN_ROOM_FAIL:
                         {
                             Debug.Log("Join Room Fail..");
+
+                            mpTxt.gameObject.SetActive(true);
+
+                            mpTxt.text = "<color='green'>방 입장에 실패했어요 ..ㅠㅠ</color>";
                         }
                         break;
                     case PROTOCOL.ACK_QUIT_GAME:

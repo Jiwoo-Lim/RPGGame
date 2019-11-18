@@ -13,6 +13,8 @@ public class Class_RoomScene : MonoBehaviour
 
     public Button mBeginPlayBtn = null;
     public Button mReadyBtn = null;
+
+    public Image mGuestImg = null;
     // Start is called before the first frame update
     void Start()
     {
@@ -23,6 +25,7 @@ public class Class_RoomScene : MonoBehaviour
         if (Class_NetworkClient.GetInst().mMyUserInfo.mUserName == Class_NetworkClient.GetInst().mRoomMaster) 
         {
             mReadyBtn.gameObject.SetActive(false);
+            mGuestImg.gameObject.SetActive(false);
         }
     }
 
@@ -77,6 +80,8 @@ public class Class_RoomScene : MonoBehaviour
 
                                     Class_NetworkClient.GetInst().mUserInfoes.Add(tUser);
                                 }
+
+                                mGuestImg.gameObject.SetActive(true);
                             }
                         }
                         break;

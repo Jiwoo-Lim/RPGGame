@@ -120,7 +120,7 @@ public class Class_NetworkClient
     {
         if (mRecvQueue == null)
         {
-            Debug.Log("Receive ERROR ryu.");
+            Debug.Log("Receive ERROR");
 
             return 0;
         }
