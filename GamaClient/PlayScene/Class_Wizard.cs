@@ -68,24 +68,24 @@ public class Class_Wizard : MonoBehaviour
         }
     }
 
-    void DamageStart()
+    public void DamageStart()
     {
         anim.SetBool("Damage", true);
     }
 
-    void DamageEnd()
+    public void DamageEnd()
     {
         anim.SetBool("Damage", false);
     }
 
     void DoAttack()
     {
+        Class_Singleton_Sound.GetInst().Play("WizardAttack");
         Class_WizardAttack tAttack = Instantiate(PFAttack, mpAttackPos.transform.position, Quaternion.identity);
 
         tAttack.GetComponent<Rigidbody>().AddForce(this.transform.forward * 30, ForceMode.Impulse);
 
         Destroy(tAttack.gameObject, 3);
     }
-
 }
 

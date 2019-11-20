@@ -32,7 +32,7 @@ namespace RPGGameServer
             tServer = new Class_NetworkServer();
             tServer.StartServer(tPort, tConnectionCount);
 
-            tConnection.ConnectionString = "Server=192.168.0.11;port=8889;Database=rpggamedb;Uid=poong;Pwd=0950;";
+            tConnection.ConnectionString = "Server=192.168.0.21;port=8889;Database=rpggamedb;Uid=Jiwoo;Pwd=1963;";
 
             tConnection.Open();
 
@@ -69,10 +69,6 @@ namespace RPGGameServer
                                         int tUserId = IsMember(tId, tPassword, tUser);
                                         if (tUserId > -1)
                                         {
-                                            tUser.mId = tUserId;
-                                            tUser.mName = tId;
-                                            tUser.mUserConnect = true;
-
                                             UserConnect(tUser);
 
                                             int tOccupationlength = tUser.mOccupation.Length;
@@ -105,17 +101,24 @@ namespace RPGGameServer
                                             Console.WriteLine("No Exist User Id");
 
                                             tUserId = CreateUser(tId, tPassword, tUser);
-                                            tUser.mUserConnect = true;
-                                            tUser.mId = tUserId;
-                                            tUser.mName = tId;
+                                            if (tUserId > -1)
+                                            {
+                                                byte[] tBufferSend = new byte[4];
+                                                tBufferSend[0] = (byte)PROTOCOL.ACK_CREATE_CHAR;
+                                                tBufferSend[1] = (byte)tUser.mId;
 
-                                            byte[] tBufferSend = new byte[4];
-                                            tBufferSend[0] = (byte)PROTOCOL.ACK_CREATE_CHAR;
-                                            tBufferSend[1] = (byte)tUser.mId;
+                                                tUser.Send(tBufferSend, tBufferSend.Length);
 
-                                            tUser.Send(tBufferSend, tBufferSend.Length);
+                                                Console.WriteLine("Create User Id");
+                                            }
+                                            else
+                                            {
+                                                byte[] tBufferSend = new byte[4];
+                                                tBufferSend[0] = (byte)PROTOCOL.ACK_CREATE_CHAR;
+                                                tBufferSend[1] = (byte)tUser.mId;
 
-                                            Console.WriteLine("Create User Id");
+                                                tUser.Send(tBufferSend, tBufferSend.Length);
+                                            }
                                         }
                                         else
                                         {
@@ -523,6 +526,8 @@ namespace RPGGameServer
 
         public static void DeleteMyUserInfo(Class_User tUser)
         {
+            tUser.mUserConnect = false;
+
             if (tUser.mpRoom != null)
             {
                 Class_Room tRoom = tUser.mpRoom;
@@ -562,8 +567,6 @@ namespace RPGGameServer
                 mDeleteUsers.Add(tUser);
                 Console.WriteLine("User End Connected");
             }
-
-            tUser.mUserConnect = false;
         }
 
         public static int IsMember(string tId, string tPassword,Class_User tUser)
@@ -578,15 +581,22 @@ namespace RPGGameServer
                     MySqlCommand cmd = new MySqlCommand(tQuery, tConnection);
                     MySqlDataReader tExecuteR = cmd.ExecuteReader();
 
-
                     while (tExecuteR.Read())
                     {
                         if (tExecuteR["Password"].ToString() == tPassword&&(bool)tExecuteR["Connect"]==false)
                         {
-                            tResult = (int)tExecuteR["Key"];
+                            tUser.mId = (int)tExecuteR["Key"];
                             tUser.mOccupation = tExecuteR["Occupation"].ToString();
                             tUser.mHP = (int)tExecuteR["HP"];
                             tUser.mAP = (int)tExecuteR["AttackAb"];
+                            tUser.mName = tId;
+
+                            if (tUser.mOccupation == "null")
+                            {
+                                tExecuteR.Close();
+                                return tResult;
+                            }
+                            tResult = tUser.mId;
                         }
                         else
                         {
@@ -630,27 +640,31 @@ namespace RPGGameServer
             {
                 if (null != tConnection)
                 {
-                    string tKey = "select rpggamedb.tbluserinfo.key from rpggamedb.tbluserinfo order by rpggamedb.tbluserinfo.key desc limit 1;";
-                    MySqlCommand cmd = new MySqlCommand(tKey, tConnection);
-                    MySqlDataReader tExecuteR = cmd.ExecuteReader();
-                    int tKey_ = 0;
-                    while (tExecuteR.Read())
+                    if (tUser.mOccupation != "null")
                     {
-                        tKey_ = (int)tExecuteR["Key"] + 1;
-                        Console.WriteLine("tKey_ : " + tKey_);
-                        tResult = tKey_;
-                    }
-                    tExecuteR.Close();
+                        string tKey = "select rpggamedb.tbluserinfo.key from rpggamedb.tbluserinfo order by rpggamedb.tbluserinfo.key desc limit 1;";
+                        MySqlCommand cmd = new MySqlCommand(tKey, tConnection);
+                        MySqlDataReader tExecuteR = cmd.ExecuteReader();
+                        int tKey_ = 0;
+                        while (tExecuteR.Read())
+                        {
+                            tKey_ = (int)tExecuteR["Key"] + 1;
+                            Console.WriteLine("tKey_ : " + tKey_);
+                            tResult = tKey_;
+                        }
+                        tExecuteR.Close();
 
-                    string tQuery = "insert into tbluserinfo values(" + tKey_ + ",'" + tId + "','" + tPassword + "','null',0,0,0,0,true);";
-                    Console.WriteLine(tQuery);
-                    MySqlCommand cmd_ = new MySqlCommand(tQuery, tConnection);
-                    MySqlDataReader tExecuteR_ = cmd_.ExecuteReader();
-                    while (tExecuteR_.Read())
-                    {
-                        tUser.mName = tExecuteR["Id"].ToString();
+                        string tQuery = "insert into tbluserinfo values(" + tKey_ + ",'" + tId + "','" + tPassword + "','null',0,0,0,0,true);";
+                        Console.WriteLine(tQuery);
+                        MySqlCommand cmd_ = new MySqlCommand(tQuery, tConnection);
+                        MySqlDataReader tExecuteR_ = cmd_.ExecuteReader();
+                        while (tExecuteR_.Read())
+                        {
+                            tUser.mId = (int)tExecuteR["Key"];
+                            tUser.mName = tId;
+                        }
+                        tExecuteR_.Close();
                     }
-                    tExecuteR_.Close();
                 }
             }
             catch (Exception ex)

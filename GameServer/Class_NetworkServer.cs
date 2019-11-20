@@ -27,14 +27,15 @@ namespace RPGGameServer
                 //사용할 포트 번호를 할당.
                 //mSocketForListen.Bind(new IPEndPoint(IPAddress.Loopback, port));
 
-                IPAddress ipaddr = IPAddress.Parse("192.168.0.11");
+                IPAddress ipaddr = IPAddress.Parse("192.168.0.21");
 
                 mSocketForListen.Bind(new IPEndPoint(ipaddr, port));
                 //대기를 시작.
                 mSocketForListen.Listen(tConnectionNum);
             }
-            catch
+            catch(Exception ex)
             {
+                Console.WriteLine(ex);
                 Console.WriteLine("StartServer fail");
 
                 return false;
@@ -70,6 +71,8 @@ namespace RPGGameServer
 
                 Class_User tUser = new Class_User();
                 tUser.mSocketForClient = tSocket;
+                tUser.mUserConnect = true;
+
                 mUsers.Add(tUser);
             }
         }

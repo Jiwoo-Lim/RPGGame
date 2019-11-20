@@ -30,7 +30,7 @@ public class Class_ReceivePlayer : MonoBehaviour
     public float tHorizontal = 0.0f;
     public float tVertical = 0.0f;
     public int tSpace = 0;
-    public int tCount = 0;
+    public int tCount = 5;
     public int tEnemyCount = 0;
 
     void Awake()

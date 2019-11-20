@@ -6,7 +6,6 @@ public class Class_Stage_1_guest : MonoBehaviour
 {
     private Class_Player mpPlayer = null;
     private Class_ReceivePlayer mpReceivePlayer = null;
-    private Class_PlayScene mpPlayScene = null;
 
     public GameObject mBridge = null;
 
@@ -28,19 +27,19 @@ public class Class_Stage_1_guest : MonoBehaviour
     {
         if (tCollider.CompareTag("TagPlayer"))
         {
+            Class_Singleton_Sound.GetInst().Play("StageClear");
+
             this.gameObject.SetActive(false);
             mBridge.gameObject.SetActive(true);
 
             OnStageClear();
-
-            mpPlayScene.mStage = Class_PlayScene.STAGE.Stage_2;
         }
         else if (tCollider.CompareTag("TagOtherPlayer"))
         {
+            Class_Singleton_Sound.GetInst().Play("StageClear");
+
             this.gameObject.SetActive(false);
             mBridge.gameObject.SetActive(true);
-
-            mpPlayScene.mStage = Class_PlayScene.STAGE.Stage_2;
         }
     }
 

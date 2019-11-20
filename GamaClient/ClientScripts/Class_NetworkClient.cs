@@ -50,7 +50,7 @@ public class Class_NetworkClient
 
     public void CreateRyu()
     {
-        mServerIPAddress = "192.168.0.11";
+        mServerIPAddress = "192.168.0.21";
         mPort = 50765;
 
         mSendQueue = new PacketQueue();

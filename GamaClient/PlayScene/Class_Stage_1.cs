@@ -8,7 +8,7 @@ public class Class_Stage_1 : MonoBehaviour
     private Class_ReceivePlayer mpReceivePlayer = null;
 
     public GameObject mBridge = null;
-
+    public bool mActive = false;
     // Start is called before the first frame update
     void Start()
     {
@@ -27,6 +27,8 @@ public class Class_Stage_1 : MonoBehaviour
     {
         if (tCollider.CompareTag("TagPlayer"))
         {
+            Class_Singleton_Sound.GetInst().Play("StageClear");
+
             this.gameObject.SetActive(false);
             mBridge.gameObject.SetActive(true);
 
@@ -34,6 +36,8 @@ public class Class_Stage_1 : MonoBehaviour
         }
         else if(tCollider.CompareTag("TagOtherPlayer"))
         {
+            Class_Singleton_Sound.GetInst().Play("StageClear");
+
             this.gameObject.SetActive(false);
             mBridge.gameObject.SetActive(true);
         }

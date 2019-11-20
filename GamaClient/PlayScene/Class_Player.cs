@@ -87,8 +87,13 @@ public class Class_Player : MonoBehaviour
             this.transform.Translate(mMoveDir * Time.deltaTime * mSpeedScalar, Space.World);
             this.transform.forward = Vector3.Lerp(this.transform.forward, mMoveDir, Time.deltaTime * 10);
         }
+        else
+        {
+            tHorizontal = 0.0f;
+            tVertical = 0.0f;
+        }
 
-        if (tCount <= 0 && mpPlayScene.mStage==Class_PlayScene.STAGE.Stage_1)
+        if (tCount <= 0 && Class_NetworkClient.GetInst().mMyUserInfo.mMyTurn == true) 
         {
             mpItemSpawn.StartSpawnItem(false);
         }
@@ -120,7 +125,7 @@ public class Class_Player : MonoBehaviour
     public void init()
     {
         //Woo
-        IP = "192.168.0.11";
+        IP = "192.168.0.21";
         //Sung
         //IP = "192.168.0.144";
         if (Class_NetworkClient.GetInst().mMyUserInfo.mUserName == Class_NetworkClient.GetInst().mRoomMaster)
@@ -156,6 +161,7 @@ public class Class_Player : MonoBehaviour
     {
         if (tCollider.CompareTag("TagItem"))
         {
+            Class_Singleton_Sound.GetInst().Play("EatItem");
             tCount -= 1;
             Destroy(tCollider.gameObject);
         }

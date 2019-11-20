@@ -134,6 +134,8 @@ public class Class_SceneRoomSelect : MonoBehaviour
 
     public void OnClickBtnCreateRoom()
     {
+        Class_Singleton_Sound.GetInst().Play("ClickSound_2");
+
         byte[] tBuffer = new byte[1024];
 
         byte tProtocolID = (byte)PROTOCOL.REQ_CREATE_ROOM;
@@ -145,6 +147,8 @@ public class Class_SceneRoomSelect : MonoBehaviour
 
     public void OnClickBtnJoinRoom()
     {
+        Class_Singleton_Sound.GetInst().Play("ClickSound_2");
+
         byte[] tBuffer = new byte[1024];
 
         byte tProtocolID = (byte)PROTOCOL.REQ_JOIN_ROOM;

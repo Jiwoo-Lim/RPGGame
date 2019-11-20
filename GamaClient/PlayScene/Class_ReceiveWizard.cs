@@ -8,11 +8,16 @@ public class Class_ReceiveWizard : MonoBehaviour
 
     private Class_ReceivePlayer mpPlayer = null;
 
+    private Class_WizardAttack PFAttack = null;
+
+    public GameObject mpAttackPos = null;
+
     void Start()
     {
         anim = GetComponent<Animator>();
-
+        
         mpPlayer = FindObjectOfType<Class_ReceivePlayer>();
+        PFAttack = Resources.Load<Class_WizardAttack>("Prefabs/PFAttack");
     }
 
     void Update()
@@ -54,6 +59,16 @@ public class Class_ReceiveWizard : MonoBehaviour
         {
             anim.SetBool("Attack", false);
         }
+    }
+
+    void DoAttack()
+    {
+        Class_Singleton_Sound.GetInst().Play("WizardAttack");
+        Class_WizardAttack tAttack = Instantiate(PFAttack, mpAttackPos.transform.position, Quaternion.identity);
+
+        tAttack.GetComponent<Rigidbody>().AddForce(this.transform.forward * 30, ForceMode.Impulse);
+
+        Destroy(tAttack.gameObject, 3);
     }
 }
 

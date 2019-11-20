@@ -10,9 +10,17 @@ public class Class_Enemy : MonoBehaviour
 
     private Class_Player mpPlayer = null;
 
+    private Class_Warrior mpWarrior = null;
+    private Class_Wizard mpWizard = null;
+
+    public Animator anim;
+
     void Start()
     {
         mpPlayer = FindObjectOfType<Class_Player>();
+        mpEnemyJon = FindObjectOfType<Class_EnemyJon>();
+        mpWarrior = FindObjectOfType<Class_Warrior>();
+        mpWizard = FindObjectOfType<Class_Wizard>();
     }
 
     // Update is called once per frame
@@ -30,6 +38,11 @@ public class Class_Enemy : MonoBehaviour
                 this.transform.forward = tDir;
 
                 this.transform.position = Vector3.MoveTowards(this.transform.position, tCollider.transform.position, 3 * Time.deltaTime);
+
+                if (anim.GetBool("Damage") == false)
+                {
+                    anim.SetBool("Work", true);
+                }
             }
         }
 
@@ -47,6 +60,25 @@ public class Class_Enemy : MonoBehaviour
         if(tCollision.collider.CompareTag("TagPlayer"))
         {
             Class_NetworkClient.GetInst().mMyUserInfo.mHP -= 50;
+            if(Class_NetworkClient.GetInst().mMyUserInfo.mOccupation == "Warrior")
+            {
+                mpWarrior.DamageStart();
+            }
+            else
+            {
+                mpWizard.DamageStart();
+            }
         }
     }
+    
+    public void DamageStart()
+    {
+        anim.SetBool("Work", false);
+        anim.SetBool("Damage", true);
+    }
+
+    //public void DamageEnd()
+    //{
+    //    anim.SetBool("Damage", false);
+    //}
 }

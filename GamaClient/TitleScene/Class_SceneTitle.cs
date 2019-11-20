@@ -124,7 +124,8 @@ public class Class_SceneTitle : MonoBehaviour
 
     public void OnClickBtnLogin()
     {
-        mIdComment =InputId.text;
+        Class_Singleton_Sound.GetInst().Play("ClickSound_2");
+        mIdComment = InputId.text;
         mPasswordComment =InputPassword.text;
 
         tUser.mUserName = mIdComment;

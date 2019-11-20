@@ -8,35 +8,37 @@ public class Class_Warrior : MonoBehaviour
 
     private Class_Player mpPlayer = null;
 
+    private Class_Clear mpClear = null;
+
     void Start()
     {
         anim = GetComponent<Animator>();
 
         mpPlayer = FindObjectOfType<Class_Player>();
+
+        mpClear = FindObjectOfType<Class_Clear>();
     }
 
     void Update()
     {
         if (Class_NetworkClient.GetInst().mMyUserInfo.mMyTurn == true)
         {
-            if (Mathf.Abs(mpPlayer.tHorizontal) > 0.0f || Mathf.Abs(mpPlayer.tVertical) > 0.0f)
+            if (anim.GetBool("Attack") == false)
             {
-                anim.SetBool("Run", true);
+                if (Mathf.Abs(mpPlayer.tHorizontal) > 0.0f || Mathf.Abs(mpPlayer.tVertical) > 0.0f)
+                {
+                    anim.SetBool("Run", true);
+                }
+                else
+                {
+                    anim.SetBool("Run", false);
+                }
             }
-            else
-            {
-                anim.SetBool("Run", false);
-            }
-
-            //test
-            //if (Input.GetKey(KeyCode.B))
-            //{
-            //    anim.SetBool("Damage", true);
-            //}
 
             if (Input.GetKey(KeyCode.Space))
             {
                 mpPlayer.tSpace = 1;
+                anim.SetBool("Run", false);
                 anim.SetBool("Attack", true);
             }
             else
@@ -53,13 +55,24 @@ public class Class_Warrior : MonoBehaviour
     }
 
 
-    void DamageStart()
+    public void DamageStart()
     {
+        Class_Singleton_Sound.GetInst().Play("Damage");
         anim.SetBool("Damage", true);
     }
 
-    void DamageEnd()
+    public void DamageEnd()
     {
         anim.SetBool("Damage", false);
+    }
+
+    public void DeathEnd()
+    {
+        mpClear.StageFail();
+    }
+
+    public void AttackSound()
+    {
+        Class_Singleton_Sound.GetInst().Play("WarriorAttack");
     }
 }

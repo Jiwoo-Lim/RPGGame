@@ -9,7 +9,7 @@ public class Class_PlayScene : MonoBehaviour
 {
     public Class_ItemSpawn mpItemSpawn = null;
     private Class_EnemyJon mpEnemySpawn = null;
-
+    public Class_MazeJon mpMazeSpawn = null;
     public Class_Stage_1 mpStage_1 = null;
     public Class_Stage_1_guest mpStage_1_guest = null;
     public Class_Stage_2 mpStage_2 = null;
@@ -30,6 +30,7 @@ public class Class_PlayScene : MonoBehaviour
     {
         mpItemSpawn = FindObjectOfType<Class_ItemSpawn>();
         mpEnemySpawn= FindObjectOfType<Class_EnemyJon>();
+        mpMazeSpawn = FindObjectOfType<Class_MazeJon>();
 
         if (Class_NetworkClient.GetInst().mMyUserInfo.mUserName==Class_NetworkClient.GetInst().mRoomMaster)
         {
@@ -79,13 +80,16 @@ public class Class_PlayScene : MonoBehaviour
                 {
                     if (Class_NetworkClient.GetInst().mMyUserInfo.mUserName == Class_NetworkClient.GetInst().mRoomMaster)
                     {
-                        if (mpPlayer.tCount <= 0)
+                        if (mpPlayer.tCount <= 0 && mpStage_1.mActive == false) 
                         {
                             mpStage_1.gameObject.SetActive(true);
+                            mpStage_1.mActive = true;
                         }
                         else if (mpReceivePlayer.tCount <= 0)
                         {
                             mpStage_1_guest.gameObject.SetActive(true);
+
+                            mStage = Class_PlayScene.STAGE.Stage_2;
                         }
                     }
                     else
@@ -93,10 +97,13 @@ public class Class_PlayScene : MonoBehaviour
                         if (mpPlayer.tCount <= 0)
                         {
                             mpStage_1_guest.gameObject.SetActive(true);
+
+                            mStage = Class_PlayScene.STAGE.Stage_2;
                         }
-                        else if (mpReceivePlayer.tCount <= 0)
+                        else if (mpReceivePlayer.tCount <= 0 && mpStage_1.mActive == false)
                         {
                             mpStage_1.gameObject.SetActive(true);
+                            mpStage_1.mActive = true;
                         }
                     }
                 }
@@ -105,13 +112,16 @@ public class Class_PlayScene : MonoBehaviour
                 {
                     if (Class_NetworkClient.GetInst().mMyUserInfo.mUserName == Class_NetworkClient.GetInst().mRoomMaster)
                     {
-                        if (mpPlayer.tEnemyCount <= 0)
+                        if (mpPlayer.tEnemyCount <= 0 && mpStage_2.mActive == false)
                         {
                             mpStage_2.gameObject.SetActive(true);
+                            mpStage_2.mActive = true;
                         }
                         else if (mpReceivePlayer.tEnemyCount <= 0)
                         {
                             mpStage_2_guest.gameObject.SetActive(true);
+
+                            mStage = STAGE.Stage_3;
                         }
                     }
                     else
@@ -119,15 +129,19 @@ public class Class_PlayScene : MonoBehaviour
                         if (mpPlayer.tEnemyCount <= 0)
                         {
                             mpStage_2_guest.gameObject.SetActive(true);
+
+                            mStage = STAGE.Stage_3;
                         }
-                        else if (mpReceivePlayer.tEnemyCount <= 0)
+                        else if (mpReceivePlayer.tEnemyCount <= 0 && mpStage_2.mActive == false) 
                         {
                             mpStage_2.gameObject.SetActive(true);
+                            mpStage_2.mActive = true;
                         }
                     }
                 }
                 break;
             case STAGE.Stage_3:
+
                 break;
         }
     }
@@ -192,10 +206,19 @@ public class Class_PlayScene : MonoBehaviour
                                         break;
                                     case STAGE.Stage_2:
                                         {
-                                            mpEnemySpawn.SpawnEnemy();
+                                            if (mpEnemySpawn.mSpawn == false)
+                                            {
+                                                mpEnemySpawn.SpawnEnemy();
+                                            }
                                         }
                                             break;
                                     case STAGE.Stage_3:
+                                        {
+                                            if(mpMazeSpawn.mSpawn==false)
+                                            {
+                                                mpMazeSpawn.SpawnMaze();
+                                            }
+                                        }
                                         break;
                                 }
                             }

@@ -30,21 +30,21 @@ public class Class_Stage_2_guest : MonoBehaviour
     {
         if (tCollider.CompareTag("TagPlayer"))
         {
+            Class_Singleton_Sound.GetInst().Play("StageClear");
+
             this.gameObject.SetActive(false);
             mBridge.gameObject.SetActive(true);
             mBtn.gameObject.SetActive(true);
-
-            mpPlayScene.mStage = Class_PlayScene.STAGE.Stage_3;
 
             OnStageClear();            
         }
         else if (tCollider.CompareTag("TagOtherPlayer"))
         {
+            Class_Singleton_Sound.GetInst().Play("StageClear");
+
             this.gameObject.SetActive(false);
             mBridge.gameObject.SetActive(true);
             mBtn.gameObject.SetActive(true);
-
-            mpPlayScene.mStage = Class_PlayScene.STAGE.Stage_3;
         }
     }
 

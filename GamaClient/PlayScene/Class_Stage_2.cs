@@ -5,6 +5,7 @@ using UnityEngine;
 public class Class_Stage_2 : MonoBehaviour
 {
     public GameObject mBridge = null;
+    public bool mActive = false;
 
     private Class_Player mpPlayer = null;
     private Class_ReceivePlayer mpReceivePlayer = null;
@@ -27,6 +28,8 @@ public class Class_Stage_2 : MonoBehaviour
     {
         if (tCollider.CompareTag("TagPlayer"))
         {
+            Class_Singleton_Sound.GetInst().Play("StageClear");
+
             this.gameObject.SetActive(false);
             mBridge.gameObject.SetActive(true);
 
@@ -34,6 +37,8 @@ public class Class_Stage_2 : MonoBehaviour
         }
         else if (tCollider.CompareTag("TagOtherPlayer"))
         {
+            Class_Singleton_Sound.GetInst().Play("StageClear");
+
             this.gameObject.SetActive(false);
             mBridge.gameObject.SetActive(true);
         }

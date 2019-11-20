@@ -142,6 +142,7 @@ public class Class_RoomScene : MonoBehaviour
 
     public void OnClickBtnReady()
     {
+        Class_Singleton_Sound.GetInst().Play("ClickSound_2");
         mReadyBtn.gameObject.SetActive(false);
 
         byte[] tBuffer = new byte[1024];
@@ -155,6 +156,8 @@ public class Class_RoomScene : MonoBehaviour
 
     public void OnClickBtnBeginPlay()
     {
+        Class_Singleton_Sound.GetInst().Play("ClickSound_2");
+
         byte[] tBuffer = new byte[1024];
 
         byte tProtocolID = (byte)PROTOCOL.REQ_BEGIN_PLAY;

@@ -7,6 +7,8 @@ public class Class_EnemyJon : MonoBehaviour
     private Class_Enemy mEnemy;
     public List<Class_Enemy> mEnemys = null;
 
+    public bool mSpawn = false;
+
     void Start()
     {
         mEnemy = Resources.Load<Class_Enemy>("Prefabs/PFEnemy");
@@ -20,6 +22,7 @@ public class Class_EnemyJon : MonoBehaviour
 
     public void SpawnEnemy()
     {
+        mSpawn = true;
         int i, j;
         if (Class_NetworkClient.GetInst().mMyUserInfo.mUserName == Class_NetworkClient.GetInst().mRoomMaster)
         {
@@ -40,7 +43,7 @@ public class Class_EnemyJon : MonoBehaviour
             {
                 for (j = 40; j < 50; j++)
                 {
-                    Class_Enemy tEnemy = Instantiate<Class_Enemy>(mEnemy, new Vector3(i, 0, j), Quaternion.identity);
+                    Class_Enemy tEnemy = Instantiate<Class_Enemy>(mEnemy, new Vector3(j, 0, i), Quaternion.identity);
                     j++;
                 }
                 i++;

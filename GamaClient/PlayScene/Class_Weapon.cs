@@ -22,8 +22,18 @@ public class Class_Weapon : MonoBehaviour
         {
             if (tCollider.CompareTag("TagEnemy"))
             {
+                Class_Singleton_Sound.GetInst().Play("Damage");
+                tCollider.GetComponent<Class_Enemy>().DamageStart();
                 tCollider.GetComponent<Class_Enemy>().mEnemyHP -= Class_NetworkClient.GetInst().mMyUserInfo.mAP;
             }
         }
     }
+
+    //private void OnCollisionEnter(Collision tCollision)
+    //{
+    //    if(tCollision.gameObject.CompareTag("TagEnemy"))
+    //    {
+    //        tCollision.gameObject.GetComponent<Class_Enemy>().mEnemyHP -= Class_NetworkClient.GetInst().mMyUserInfo.mAP;
+    //    }
+    //}
 }

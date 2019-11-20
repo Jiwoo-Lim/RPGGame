@@ -17,25 +17,22 @@ public class Class_ReceiveWarrior : MonoBehaviour
 
     void Update()
     {
-
-        if (Mathf.Abs(mpPlayer.tHorizontal) > 0.0f || Mathf.Abs(mpPlayer.tVertical) > 0.0f)
+        if (anim.GetBool("Attack") == false)
         {
-            anim.SetBool("Run", true);
+            if (Mathf.Abs(mpPlayer.tHorizontal) > 0.0f || Mathf.Abs(mpPlayer.tVertical) > 0.0f)
+            {
+                anim.SetBool("Run", true);
+            }
+            else
+            {
+                anim.SetBool("Run", false);
+            }
         }
-        else
-        {
-            anim.SetBool("Run", false);
-        }
-
-        //test
-        //if (Input.GetKey(KeyCode.B))
-        //{
-        //    anim.SetBool("Damage", true);
-        //}
 
         if (mpPlayer.tSpace == 1) 
         {
             mpPlayer.tSpace = 1;
+            anim.SetBool("Run", false);
             anim.SetBool("Attack", true);
         }
         else
@@ -54,5 +51,10 @@ public class Class_ReceiveWarrior : MonoBehaviour
                 }
             }
         }
+    }
+
+    public void AttackSound()
+    {
+        Class_Singleton_Sound.GetInst().Play("WarriorAttack");
     }
 }
